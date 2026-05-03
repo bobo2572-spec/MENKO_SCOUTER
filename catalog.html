@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>MENKO SCOUTER // 名鑑</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  :root{--bg:#0a0a0f;--panel:#111118;--border:#2a2a3a;--accent:#00ff88;--accent2:#ff6600;--danger:#ff2244;--text:#e0e0e0;--dim:#666;--glow:0 0 12px rgba(0,255,136,0.4)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;min-height:100vh}
+  #header{background:var(--panel);border-bottom:1px solid var(--accent);padding:10px 16px;
+    display:flex;align-items:center;justify-content:space-between;
+    box-shadow:0 2px 20px rgba(0,255,136,0.15)}
+  .logo{font-size:16px;font-weight:bold;letter-spacing:3px;color:var(--accent);text-shadow:var(--glow)}
+  .logo span{color:var(--accent2)}
+  .back-link{font-size:11px;color:var(--dim);letter-spacing:2px;text-decoration:none;
+    border:1px solid var(--border);padding:6px 12px;transition:all 0.15s}
+  .back-link:active{border-color:var(--accent);color:var(--accent)}
+
+  #content{padding:12px;display:flex;flex-direction:column;gap:10px}
+
+  .toolbar{display:flex;align-items:center;justify-content:space-between}
+  .toolbar-title{font-size:11px;color:var(--dim);letter-spacing:2px}
+  .btn-refresh{background:none;border:1px solid var(--border);color:var(--dim);
+    font-family:inherit;font-size:11px;letter-spacing:1px;padding:6px 12px;cursor:pointer;
+    -webkit-tap-highlight-color:transparent;transition:all 0.15s}
+  .btn-refresh:active{border-color:var(--accent);color:var(--accent)}
+
+  /* catalog table */
+  .catalog-list{display:flex;flex-direction:column;gap:6px}
+  .catalog-row{display:flex;align-items:center;gap:10px;
+    background:var(--panel);border:1px solid var(--border);padding:10px 12px}
+  .catalog-pos{min-width:24px;font-size:12px;color:var(--dim);text-align:right}
+  .cat-rank-badge{min-width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+    border-radius:2px;font-size:11px;font-weight:bold}
+  .catalog-info{flex:1;min-width:0}
+  .catalog-name{font-size:14px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .catalog-meta{display:flex;gap:8px;margin-top:3px;flex-wrap:wrap}
+  .catalog-meta span{font-size:10px;color:var(--dim)}
+  .catalog-meta .owner{color:#8888aa}
+  .catalog-bp{font-size:20px;font-weight:bold;white-space:nowrap;font-variant-numeric:tabular-nums}
+
+  .surface-badge{font-size:9px;padding:1px 5px;border-radius:2px;
+    border:1px solid var(--border);color:var(--dim)}
+
+  #status-msg{font-size:12px;color:var(--dim);text-align:center;padding:24px}
+
+  /* rank colors */
+  .rank-E{color:#888}.rank-D{color:#66aaff}.rank-C{color:#44ff88}
+  .rank-B{color:#ffff44}.rank-A{color:#ff8800}.rank-S{color:#ff2244}.rank-SS{color:#ff00ff}
+  .rb-E{background:rgba(136,136,136,.15);color:#888;   border:1px solid #888}
+  .rb-D{background:rgba(102,170,255,.15);color:#66aaff;border:1px solid #66aaff}
+  .rb-C{background:rgba(68,255,136,.15); color:#44ff88;border:1px solid #44ff88}
+  .rb-B{background:rgba(255,255,68,.15); color:#ffff44;border:1px solid #ffff44}
+  .rb-A{background:rgba(255,136,0,.15);  color:#ff8800;border:1px solid #ff8800}
+  .rb-S{background:rgba(255,34,68,.15);  color:#ff2244;border:1px solid #ff2244}
+  .rb-SS{background:rgba(255,0,255,.15); color:#ff00ff;border:1px solid #ff00ff}
+</style>
+</head>
+<body>
+<div id="header">
+  <div class="logo">MENKO <span>SCOUTER</span> // 名鑑</div>
+  <a href="index.html" class="back-link">← HOME</a>
+</div>
+
+<div id="content">
+  <div class="toolbar">
+    <span class="toolbar-title">// MENKO CATALOG</span>
+    <button class="btn-refresh" onclick="loadCatalog()">↺ 更新</button>
+  </div>
+  <div class="catalog-list" id="catalog-list">
+    <div id="status-msg">読み込み中...</div>
+  </div>
+</div>
+
+<script>
+let db = null;
+
+async function init() {
+  try {
+    const res = await fetch('/api/config');
+    if (!res.ok) throw new Error('config');
+    const { url, anonKey } = await res.json();
+    db = window.supabase.createClient(url, anonKey);
+    loadCatalog();
+  } catch(e) {
+    $('status-msg').textContent = 'DB接続失敗: ' + e.message;
+  }
+}
+
+async function loadCatalog() {
+  const list = $('catalog-list');
+  list.innerHTML = '<div id="status-msg">読み込み中...</div>';
+
+  const { data, error } = await db
+    .from('menko_records')
+    .select('name, owner, bp, birth_year, birth_month, surface, created_at')
+    .order('bp', { ascending: false })
+    .limit(100);
+
+  if (error) {
+    list.innerHTML = '<div id="status-msg">読み込みエラー: ' + escapeHtml(error.message) + '</div>';
+    return;
+  }
+  if (!data || data.length === 0) {
+    list.innerHTML = '<div id="status-msg">記録なし</div>';
+    return;
+  }
+
+  list.innerHTML = data.map((r, idx) => {
+    const rank = getRank(r.bp);
+    const age  = calcAge(r.birth_year, r.birth_month);
+    const surfLabel = { concrete:'コンクリート', asphalt:'アスファルト', dirt:'土' }[r.surface] || r.surface || '-';
+    return `<div class="catalog-row">
+      <div class="catalog-pos">${idx + 1}</div>
+      <div class="cat-rank-badge rb-${rank}">${rank}</div>
+      <div class="catalog-info">
+        <div class="catalog-name">${escapeHtml(r.name)}</div>
+        <div class="catalog-meta">
+          <span class="owner">▶ ${escapeHtml(r.owner || '不明')}</span>
+          <span>機齢: ${age}</span>
+          <span class="surface-badge">${surfLabel}</span>
+        </div>
+      </div>
+      <div class="catalog-bp rank-${rank}">${r.bp.toLocaleString()}</div>
+    </div>`;
+  }).join('');
+}
+
+function getRank(bp) {
+  if (bp < 100)  return 'E';
+  if (bp < 300)  return 'D';
+  if (bp < 700)  return 'C';
+  if (bp < 1500) return 'B';
+  if (bp < 3000) return 'A';
+  if (bp < 6000) return 'S';
+  return 'SS';
+}
+
+function calcAge(year, month) {
+  if (!year) return '不明';
+  const now = new Date();
+  const totalMonths = (now.getFullYear() - year) * 12 + now.getMonth() - ((month || 1) - 1);
+  if (totalMonths < 0) return '不明';
+  const y = Math.floor(totalMonths / 12), m = totalMonths % 12;
+  if (y === 0) return m + 'ヶ月';
+  if (m === 0) return y + '年';
+  return y + '年' + m + 'ヶ月';
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function $(id) { return document.getElementById(id); }
+
+init();
+</script>
+</body>
+</html>

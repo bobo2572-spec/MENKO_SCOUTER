@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>MENKO SCOUTER // ADMIN</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  :root{--bg:#0a0a0f;--panel:#111118;--border:#2a2a3a;--accent:#00ff88;--accent2:#ff6600;--danger:#ff2244;--text:#e0e0e0;--dim:#666;--glow:0 0 12px rgba(0,255,136,0.4)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;min-height:100vh}
+
+  #header{background:var(--panel);border-bottom:1px solid var(--accent2);padding:10px 16px;
+    display:flex;align-items:center;justify-content:space-between;
+    box-shadow:0 2px 20px rgba(255,102,0,0.15)}
+  .logo{font-size:16px;font-weight:bold;letter-spacing:3px;color:var(--accent2)}
+  .back-link{font-size:11px;color:var(--dim);letter-spacing:2px;text-decoration:none;
+    border:1px solid var(--border);padding:6px 12px;transition:all 0.15s}
+  .back-link:active{border-color:var(--accent);color:var(--accent)}
+
+  /* toast */
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 20px;
+    border-radius:2px;font-size:12px;letter-spacing:2px;pointer-events:none;z-index:1000;
+    opacity:0;transition:opacity 0.2s;white-space:nowrap}
+  #toast.show{opacity:1}
+  #toast.info   {background:#1a1a2a;border:1px solid var(--accent);color:var(--accent)}
+  #toast.success{background:#0a1a12;border:1px solid var(--accent);color:var(--accent)}
+  #toast.error  {background:#1a0a0a;border:1px solid var(--danger);color:var(--danger)}
+
+  /* gate */
+  #pw-gate{display:flex;flex-direction:column;align-items:center;justify-content:center;
+    min-height:60vh;gap:20px;padding:24px}
+  .gate-icon{font-size:48px}
+  .gate-title{font-size:16px;letter-spacing:4px;color:var(--accent2)}
+  #pw-gate input{width:100%;max-width:280px;background:var(--bg);border:1px solid var(--border);
+    color:var(--text);font-family:inherit;font-size:18px;padding:14px;outline:none;
+    text-align:center;letter-spacing:4px;transition:border-color 0.2s}
+  #pw-gate input:focus{border-color:var(--accent2)}
+  .btn-unlock{background:transparent;border:2px solid var(--accent2);color:var(--accent2);
+    font-family:inherit;font-size:14px;font-weight:bold;letter-spacing:3px;padding:14px 40px;
+    cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all 0.2s}
+  .btn-unlock:active{background:rgba(255,102,0,0.15);transform:scale(0.97)}
+
+  /* config panel */
+  #config-panel{display:none;padding:12px;flex-direction:column;gap:14px}
+
+  .section{background:var(--panel);border:1px solid var(--border);padding:14px}
+  .section-title{font-size:11px;letter-spacing:3px;color:var(--accent2);margin-bottom:14px;
+    border-bottom:1px solid var(--border);padding-bottom:8px}
+
+  /* surface params */
+  .surface-table{width:100%;border-collapse:collapse}
+  .surface-table th{font-size:10px;color:var(--dim);letter-spacing:1px;padding:6px 8px;
+    text-align:left;border-bottom:1px solid var(--border)}
+  .surface-table td{padding:6px 8px;border-bottom:1px solid #1a1a22;vertical-align:middle}
+  .surf-name{font-size:12px;color:var(--text);letter-spacing:1px}
+  .surface-table input{width:100%;background:var(--bg);border:1px solid var(--border);
+    color:var(--text);font-family:inherit;font-size:13px;padding:6px 8px;outline:none;
+    transition:border-color 0.2s}
+  .surface-table input:focus{border-color:var(--accent2)}
+  .hint{font-size:9px;color:var(--dim);margin-top:4px;line-height:1.5}
+
+  /* bp params */
+  .param-grid{display:flex;flex-direction:column;gap:12px}
+  .param-row{display:flex;align-items:center;gap:12px}
+  .param-lbl{flex:1;font-size:11px;color:var(--dim);letter-spacing:1px}
+  .param-row input{width:100px;background:var(--bg);border:1px solid var(--border);
+    color:var(--text);font-family:inherit;font-size:14px;padding:8px;outline:none;
+    text-align:right;transition:border-color 0.2s}
+  .param-row input:focus{border-color:var(--accent2)}
+  .formula-display{font-size:10px;color:var(--dim);padding:10px;background:#0d0d15;
+    border:1px solid var(--border);line-height:1.7;margin-top:8px}
+
+  .btn-save{width:100%;padding:16px;background:transparent;border:2px solid var(--accent);
+    color:var(--accent);font-family:inherit;font-size:14px;font-weight:bold;
+    letter-spacing:3px;cursor:pointer;text-shadow:var(--glow);box-shadow:var(--glow);
+    transition:all 0.15s;-webkit-tap-highlight-color:transparent}
+  .btn-save:active{background:rgba(0,255,136,0.1);transform:scale(0.98)}
+</style>
+</head>
+<body>
+<div id="header">
+  <div class="logo">ADMIN PANEL</div>
+  <a href="index.html" class="back-link">← HOME</a>
+</div>
+<div id="toast"></div>
+
+<!-- PASSWORD GATE -->
+<div id="pw-gate">
+  <div class="gate-icon">🔒</div>
+  <div class="gate-title">// ADMIN ACCESS</div>
+  <input type="password" id="pw-input" placeholder="PASSWORD" maxlength="30"
+    onkeydown="if(event.key==='Enter')checkPassword()">
+  <button class="btn-unlock" onclick="checkPassword()">UNLOCK</button>
+</div>
+
+<!-- CONFIG PANEL -->
+<div id="config-panel">
+
+  <!-- Surface params -->
+  <div class="section">
+    <div class="section-title">// SURFACE PARAMETERS</div>
+    <table class="surface-table">
+      <thead>
+        <tr>
+          <th>SURFACE</th>
+          <th>検知倍率<br><span style="font-weight:normal;font-size:9px">thresholdMult</span></th>
+          <th>BP係数<br><span style="font-weight:normal;font-size:9px">bpScale</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="surf-name">コンクリート</span></td>
+          <td><input type="number" id="concrete-threshold" value="4"   step="0.1" min="1" max="20"></td>
+          <td><input type="number" id="concrete-scale"     value="1.0" step="0.05" min="0.1" max="5"></td>
+        </tr>
+        <tr>
+          <td><span class="surf-name">アスファルト</span></td>
+          <td><input type="number" id="asphalt-threshold"  value="4"   step="0.1" min="1" max="20"></td>
+          <td><input type="number" id="asphalt-scale"      value="1.0" step="0.05" min="0.1" max="5"></td>
+        </tr>
+        <tr>
+          <td><span class="surf-name">土</span></td>
+          <td><input type="number" id="dirt-threshold"     value="3"   step="0.1" min="1" max="20"></td>
+          <td><input type="number" id="dirt-scale"         value="1.3" step="0.05" min="0.1" max="5"></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="hint">
+      検知倍率：ノイズの何倍を衝撃トリガーとするか（大きいほど感度低）<br>
+      BP係数：その路面で計測したBPに掛ける補正係数
+    </div>
+  </div>
+
+  <!-- BP params -->
+  <div class="section">
+    <div class="section-title">// BP FORMULA PARAMETERS</div>
+    <div class="param-grid">
+      <div class="param-row">
+        <span class="param-lbl">W（スケール定数）</span>
+        <input type="number" id="bp-W" value="60" step="5" min="1" max="1000">
+      </div>
+      <div class="param-row">
+        <span class="param-lbl">ジャーク正規化除数<br><span style="font-size:9px">jerkNormDivisor</span></span>
+        <input type="number" id="bp-jerkDiv" value="30" step="1" min="1" max="500">
+      </div>
+      <div class="param-row">
+        <span class="param-lbl">ジャーク指数<br><span style="font-size:9px">jerkPower</span></span>
+        <input type="number" id="bp-jerkPow" value="1.5" step="0.1" min="0.1" max="5">
+      </div>
+    </div>
+    <div class="formula-display">
+      BP = seismicSum × (1 + jerk/(noise×jerkNormDivisor))^jerkPower × W × bpScale
+    </div>
+  </div>
+
+  <button class="btn-save" onclick="saveConfig()">▶ SAVE CONFIG</button>
+</div>
+
+<script>
+let db = null;
+let adminPassword = null;
+let toastTimer = null;
+
+function $(id) { return document.getElementById(id); }
+
+function showToast(msg, type='info') {
+  const el = $('toast');
+  el.textContent = msg; el.className = 'show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className=''; }, 2200);
+}
+
+async function init() {
+  try {
+    const res = await fetch('/api/config');
+    if (!res.ok) throw new Error('config');
+    const { url, anonKey, adminPassword: pw } = await res.json();
+    adminPassword = pw;
+    db = window.supabase.createClient(url, anonKey);
+  } catch(e) {
+    showToast('設定読み込み失敗', 'error');
+  }
+}
+
+function checkPassword() {
+  if (!adminPassword) { showToast('設定未読み込み', 'error'); return; }
+  if ($('pw-input').value === adminPassword) {
+    $('pw-gate').style.display = 'none';
+    const panel = $('config-panel');
+    panel.style.display = 'flex';
+    loadConfig();
+  } else {
+    showToast('パスワードが違います', 'error');
+    $('pw-input').value = '';
+  }
+}
+
+async function loadConfig() {
+  if (!db) return;
+  const { data } = await db.from('admin_config').select('id, value');
+  if (!data) return;
+  for (const row of data) {
+    if (row.id === 'surface_params') {
+      const surfaces = ['concrete','asphalt','dirt'];
+      for (const s of surfaces) {
+        if (row.value[s]) {
+          const th = $(s + '-threshold');
+          const sc = $(s + '-scale');
+          if (th) th.value = row.value[s].thresholdMult;
+          if (sc) sc.value = row.value[s].bpScale;
+        }
+      }
+    }
+    if (row.id === 'bp_params') {
+      $('bp-W').value      = row.value.W;
+      $('bp-jerkDiv').value = row.value.jerkNormDivisor;
+      $('bp-jerkPow').value = row.value.jerkPower;
+    }
+  }
+}
+
+async function saveConfig() {
+  if (!db) { showToast('DB未接続', 'error'); return; }
+
+  const surface_params = {
+    concrete: { thresholdMult: parseFloat($('concrete-threshold').value)||4,  bpScale: parseFloat($('concrete-scale').value)||1.0 },
+    asphalt:  { thresholdMult: parseFloat($('asphalt-threshold').value)||4,   bpScale: parseFloat($('asphalt-scale').value)||1.0  },
+    dirt:     { thresholdMult: parseFloat($('dirt-threshold').value)||3,       bpScale: parseFloat($('dirt-scale').value)||1.3    },
+  };
+  const bp_params = {
+    W:               parseFloat($('bp-W').value)      || 60,
+    jerkNormDivisor: parseFloat($('bp-jerkDiv').value) || 30,
+    jerkPower:       parseFloat($('bp-jerkPow').value) || 1.5,
+  };
+
+  const now = new Date().toISOString();
+  const [r1, r2] = await Promise.all([
+    db.from('admin_config').upsert({ id:'surface_params', value:surface_params, updated_at:now }),
+    db.from('admin_config').upsert({ id:'bp_params',      value:bp_params,      updated_at:now }),
+  ]);
+
+  if (r1.error || r2.error) {
+    showToast('保存失敗', 'error');
+    console.error(r1.error, r2.error);
+  } else {
+    showToast('保存完了 ✓', 'success');
+  }
+}
+
+$('pw-input').addEventListener('keydown', e => { if(e.key==='Enter') checkPassword(); });
+
+init();
+</script>
+</body>
+</html>
