@@ -1,0 +1,5 @@
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Permissions-Policy = "gyroscope=*, accelerometer=*"
+    Cross-Origin-Opener-Policy = "same-origin"
