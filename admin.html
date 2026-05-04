@@ -148,6 +148,10 @@
         <span class="param-lbl">ジャーク指数<br><span style="font-size:9px">jerkPower</span></span>
         <input type="number" id="bp-jerkPow" value="1.5" step="0.1" min="0.1" max="5">
       </div>
+      <div class="param-row">
+        <span class="param-lbl">計測時間 (片側ms)<br><span style="font-size:9px">impactWindow</span></span>
+        <input type="number" id="bp-window" value="250" step="10" min="50" max="1000">
+      </div>
     </div>
     <div class="formula-display">
       BP = seismicSum × (1 + jerk/(noise×jerkNormDivisor))^jerkPower × W × bpScale
@@ -224,6 +228,7 @@ async function loadConfig() {
       $('bp-W').value      = row.value.W;
       $('bp-jerkDiv').value = row.value.jerkNormDivisor;
       $('bp-jerkPow').value = row.value.jerkPower;
+      $('bp-window').value  = row.value.impactWindow || 250;
     }
   }
 }
@@ -240,6 +245,7 @@ async function saveConfig() {
     W:               parseFloat($('bp-W').value)      || 60,
     jerkNormDivisor: parseFloat($('bp-jerkDiv').value) || 30,
     jerkPower:       parseFloat($('bp-jerkPow').value) || 1.5,
+    impactWindow:    parseFloat($('bp-window').value)  || 250,
   };
 
   const now = new Date().toISOString();
