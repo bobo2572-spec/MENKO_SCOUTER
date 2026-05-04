@@ -576,10 +576,7 @@ html, body {
       </div>
 
       <div class="ctrl-row">
-        <div class="sensing-wrap">
-          <span class="sensing-lbl">センサー</span>
-          <button class="btn-toggle on" id="btn-sensing" onclick="toggleSensing()">ON</button>
-        </div>
+        <!-- manual sensing toggle removed as per new requirement -->
         <button class="btn-measure" id="btn-measure" onclick="toggleMeasure()">▶ はかる！</button>
         <button class="btn-save"    id="btn-save"    onclick="openModal()" disabled>💾<br>ほぞん</button>
       </div>
@@ -851,6 +848,7 @@ async function finishCalibration() {
   const samples = state.calSamples.filter(v => v >= 0);
   state.noiseBaseline = samples.length > 0 ? samples.reduce((a,b)=>a+b,0)/samples.length : 0.05;
   applyThreshold();
+  state.sensing = false; // Turn off sensor by default in main screen
   setStatus('じゅんびOK！', true);
   showScreen('main');
   initSeisCanvas();
@@ -913,17 +911,6 @@ function setSurface(s) {
   const labels = { concrete:'🏗 コンクリート', asphalt:'🛣 アスファルト', dirt:'🌱 つち' };
   $('surface-tag').textContent = labels[s] || s;
   if (state.lastBP === null) updateCardType(SURF_TYPE[s] || 'fighting');
-}
-
-// ── SENSING ──
-function toggleSensing() {
-  state.sensing = !state.sensing;
-  const btn = $('btn-sensing');
-  btn.textContent = state.sensing ? 'ON' : 'OFF';
-  btn.className   = 'btn-toggle ' + (state.sensing ? 'on' : 'off');
-  if (!state.sensing && state.measuring) toggleMeasure();
-  $('btn-measure').disabled = !state.sensing;
-  setStatus(state.sensing ? 'じゅんびOK！' : 'センサーやすみ', state.sensing);
 }
 
 // ── RECALIBRATE ──
@@ -1109,13 +1096,14 @@ function toggleMeasure() {
     return;
   }
   state.measuring = !state.measuring;
+  state.sensing = state.measuring; // Sensor ON only when measuring
   const btn = $('btn-measure');
   if (state.measuring) {
     btn.textContent = '■ ストップ！'; btn.classList.add('measuring');
     setStatus('はかりちゅう！！', true); state.impactCooldown = false;
   } else {
     btn.textContent = '▶ はかる！'; btn.classList.remove('measuring');
-    setStatus('じゅんびOK！', true);
+    setStatus('じゅんびOK！', false); // Indicate sensor is OFF
   }
 }
 
