@@ -249,7 +249,8 @@ async function saveConfig() {
   ]);
 
   if (r1.error || r2.error) {
-    showToast('保存失敗', 'error');
+    const err = (r1.error?.message || '') + ' ' + (r2.error?.message || '');
+    showToast('保存失敗: ' + err, 'error');
     console.error(r1.error, r2.error);
   } else {
     showToast('保存完了 ✓', 'success');
