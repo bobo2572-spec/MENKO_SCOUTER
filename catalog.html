@@ -478,8 +478,17 @@ html, body {
           <span class="type-pip"  id="mc-pip">⭐</span>
         </div>
       </div>
-      <div class="det-photo-wrap" id="mc-photo-section" style="display:none">
-        <img id="mc-photo" style="width:100%;max-height:260px;object-fit:contain" src="" alt="">
+      <div class="det-photo-wrap" id="mc-photo-wrap">
+        <img id="mc-photo-img" class="det-photo-img" src="" alt="">
+        <div id="mc-photo-placeholder" style="display:none">
+          <div class="det-photo-placeholder">🃏</div>
+          <div class="det-photo-placeholder-lbl">しゃしんなし</div>
+        </div>
+        <label class="btn-photo-upload" id="btn-mc-photo-upload">
+          📷 写真をついか
+          <input type="file" id="file-mc-photo" accept="image/*" onchange="handleMeasurePhotoUpload(event)">
+        </label>
+        <div class="det-uploading" id="mc-uploading" style="display:none">アップロードちゅう…</div>
       </div>
       <div class="det-info" style="margin-top:8px">
         <div class="det-info-row"><span class="det-info-lbl">けいそく日</span><span class="det-info-val" id="mc-date">--</span></div>
@@ -528,6 +537,7 @@ let measDataMap = new Map();
 let currentFilter = 'all';
 let editingRecord = null;
 let currentDetailRecord = null;
+let currentMeasureId = null;
 let toastTimer = null;
 
 function $(id) { return document.getElementById(id); }
@@ -837,15 +847,13 @@ async function loadMeasurements(menkoId) {
   const measHTML = data.map(m => {
     const mRank    = getRank(m.bp);
     const mDate    = new Date(m.measured_at).toLocaleDateString('ja-JP');
-    const hasPhoto = !!m.photo_url;
-    return `<div class="hist-item${hasPhoto ? ' hist-tappable' : ''}"
-      ${hasPhoto ? `onclick="openMeasureCard('${m.id}')"` : ''}>
+    return `<div class="hist-item hist-tappable" onclick="openMeasureCard('${m.id}')">
       <div class="hist-badge hist-recheck">追加</div>
       <div class="hist-info">
         <span class="hist-bp rank-${mRank}">${m.bp.toLocaleString()} BP</span>
         <span class="hist-meta">${mDate}${m.notes ? ' | ' + escapeHtml(m.notes) : ''} | ${SURF_LABELS[m.surface]||m.surface||''}</span>
       </div>
-      ${hasPhoto ? '<span class="hist-photo-badge">📷 タップ</span>' : ''}
+      <span class="hist-photo-badge">📷 タップ</span>
     </div>`;
   }).join('');
   list.innerHTML = initHTML + measHTML;
@@ -855,9 +863,11 @@ async function loadMeasurements(menkoId) {
 function openMeasureCard(id) {
   const m = measDataMap.get(String(id));
   if (!m || !currentDetailRecord) return;
+  currentMeasureId = m.id;
   const rank  = getRank(m.bp);
   const stage = RANK_STAGE[rank] || 'Basic';
   const td = applyCardType($('meascard-card'), rank);
+  const isOwn = currentUser && currentDetailRecord.user_id === currentUser.id;
 
   $('mc-stage').textContent = stage;
   $('mc-name').textContent  = currentDetailRecord.name;
@@ -868,11 +878,17 @@ function openMeasureCard(id) {
   pip.textContent = td.emoji;
 
   if (m.photo_url) {
-    $('mc-photo').src = m.photo_url;
-    $('mc-photo-section').style.display = 'flex';
+    $('mc-photo-img').src = m.photo_url;
+    $('mc-photo-img').style.display = 'block';
+    $('mc-photo-placeholder').style.display = 'none';
   } else {
-    $('mc-photo-section').style.display = 'none';
+    $('mc-photo-img').style.display = 'none';
+    $('mc-photo-placeholder').style.display = 'flex';
+    $('mc-photo-placeholder').style.flexDirection = 'column';
+    $('mc-photo-placeholder').style.alignItems = 'center';
   }
+  $('btn-mc-photo-upload').style.display = isOwn ? 'flex' : 'none';
+
   $('mc-date').textContent    = new Date(m.measured_at).toLocaleDateString('ja-JP');
   $('mc-surface').textContent = SURF_LABELS[m.surface] || m.surface || '--';
   const notesRow = $('mc-notes-row');
@@ -880,6 +896,41 @@ function openMeasureCard(id) {
   else { notesRow.style.display = 'none'; }
 
   $('meascard-overlay').classList.add('active');
+}
+
+async function handleMeasurePhotoUpload(event) {
+  if (!db || !currentDetailRecord || !currentMeasureId || !currentUser) return;
+  const file = event.target.files[0];
+  if (!file) return;
+  $('mc-uploading').style.display = 'block';
+  $('btn-mc-photo-upload').style.opacity = '0.5';
+
+  const path = currentDetailRecord.id + '/meas_' + currentMeasureId + '_' + Date.now() + '.jpg';
+  const { error: upErr } = await db.storage.from('menko-photos').upload(path, file, { upsert: true });
+
+  if (upErr) {
+    showToast('アップロード失敗: ' + upErr.message, 'error');
+    $('mc-uploading').style.display = 'none';
+    $('btn-mc-photo-upload').style.opacity = '1';
+    return;
+  }
+
+  const { data: { publicUrl } } = db.storage.from('menko-photos').getPublicUrl(path);
+  const { error: dbErr } = await db.from('menko_measurements').update({ photo_url: publicUrl }).eq('id', currentMeasureId);
+
+  if (dbErr) {
+    showToast('DB更新失敗: ' + dbErr.message, 'error');
+  } else {
+    const m = measDataMap.get(String(currentMeasureId));
+    if (m) m.photo_url = publicUrl;
+    $('mc-photo-img').src = publicUrl;
+    $('mc-photo-img').style.display = 'block';
+    $('mc-photo-placeholder').style.display = 'none';
+    showToast('しゃしんをつけたよ！ 📷', 'success');
+  }
+
+  $('mc-uploading').style.display = 'none';
+  $('btn-mc-photo-upload').style.opacity = '1';
 }
 function closeMeasureCard() {
   $('meascard-overlay').classList.remove('active');
