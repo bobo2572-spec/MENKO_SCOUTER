@@ -540,10 +540,6 @@ html, body {
           <div class="cfs-lbl">するどさ</div>
           <div class="cfs-val" id="m-sharp">0.00</div>
         </div>
-        <div class="cfs-item">
-          <div class="cfs-lbl">さいだい G</div>
-          <div class="cfs-val" id="m-peak">0.00</div>
-        </div>
       </div>
 
       <!-- bottom row -->
@@ -1020,7 +1016,6 @@ function showResult(bp, seismic, jerk, peakG) {
   // metrics
   $('m-seismic').textContent = Math.round(seismic * 100);
   $('m-sharp').textContent   = Math.round(jerk);
-  $('m-peak').textContent    = Math.round(peakG * 100);
   $('btn-save').disabled = false;
   // Store last measurement so catalog can pre-fill "add measurement"
   localStorage.setItem('menko_last_bp', bp);

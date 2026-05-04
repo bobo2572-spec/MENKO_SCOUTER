@@ -438,7 +438,6 @@ html, body {
       <div class="det-stats">
         <div class="det-stat"><div class="det-stat-lbl">ゆれ</div><div class="det-stat-val" id="det-seismic">--</div></div>
         <div class="det-stat"><div class="det-stat-lbl">するどさ</div><div class="det-stat-val" id="det-jerk">--</div></div>
-        <div class="det-stat"><div class="det-stat-lbl">さいだいG</div><div class="det-stat-val" id="det-peakg">--</div></div>
       </div>
 
       <!-- info -->
@@ -758,7 +757,6 @@ function openDetail(id) {
 
   $('det-seismic').textContent = r.seismic != null ? Math.round(Number(r.seismic) * 100) : '--';
   $('det-jerk').textContent    = r.jerk    != null ? Math.round(Number(r.jerk)) : '--';
-  $('det-peakg').textContent   = r.peak_g  != null ? Math.round(Number(r.peak_g) * 100) : '--';
 
   $('det-owner').textContent  = r.owner || '不明';
   $('det-birth').textContent  = r.birth_year
