@@ -1104,6 +1104,10 @@ function drawStar(ctx,cx,cy,spikes,outer,inner){
 
 // ── MEASURE ──
 function toggleMeasure() {
+  if (!currentUser) {
+    showToast('「はかる」にはログインが必要です 🔑', 'info');
+    return;
+  }
   state.measuring = !state.measuring;
   const btn = $('btn-measure');
   if (state.measuring) {
