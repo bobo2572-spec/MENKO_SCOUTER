@@ -62,10 +62,6 @@ html, body {
 .logo-m { color:var(--gold-hi);text-shadow:0 0 14px rgba(240,208,96,0.6); }
 .logo-s { color:#ff7070;text-shadow:0 0 14px rgba(255,112,112,0.5); }
 .status-wrap { display:flex;align-items:center;gap:6px; }
-.status-dot { width:9px;height:9px;border-radius:50%;background:var(--dim);transition:background 0.3s; }
-.status-dot.active { background:#69f0ae;box-shadow:0 0 8px #69f0ae;animation:pulse 1s infinite; }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-#status-label { font-size:11px;color:var(--dim);font-weight:700; }
 #db-indicator { font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px; }
 #db-indicator.online  { background:rgba(105,240,174,0.2);color:#69f0ae; }
 #db-indicator.offline { background:rgba(255,255,255,0.08);color:var(--dim); }
@@ -455,8 +451,6 @@ html, body {
     <div class="logo"><span class="logo-m">メンコ</span><span class="logo-s">スカウター</span></div>
     <button class="btn-header-auth" id="btn-auth" onclick="handleAuth()">ログイン</button>
     <div class="status-wrap">
-      <span class="status-dot" id="status-dot"></span>
-      <span id="status-label">まだだよ</span>
       <span id="db-indicator" class="offline">DB</span>
     </div>
   </div>
@@ -774,8 +768,7 @@ function getRankLabel(bp) {
 }
 
 function setStatus(label, active) {
-  $('status-label').textContent = label;
-  $('status-dot').classList.toggle('active', active);
+  // UI elements removed as per user request
 }
 
 function escapeHtml(s) {
