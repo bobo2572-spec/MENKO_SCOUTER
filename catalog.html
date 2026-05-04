@@ -3,130 +3,308 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>MENKO SCOUTER // 名鑑</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#c8a000">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icons/icon.svg">
+<title>メンコスカウター // 名鑑</title>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
-  :root{--bg:#0a0a0f;--panel:#111118;--border:#2a2a3a;--accent:#00ff88;--accent2:#ff6600;--danger:#ff2244;--text:#e0e0e0;--dim:#666;--glow:0 0 12px rgba(0,255,136,0.4)}
-  *{box-sizing:border-box;margin:0;padding:0}
-  html,body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;min-height:100vh}
-  #header{background:var(--panel);border-bottom:1px solid var(--accent);padding:10px 16px;
-    display:flex;align-items:center;justify-content:space-between;
-    box-shadow:0 2px 20px rgba(0,255,136,0.15)}
-  .logo{font-size:16px;font-weight:bold;letter-spacing:3px;color:var(--accent);text-shadow:var(--glow)}
-  .logo span{color:var(--accent2)}
-  .back-link{font-size:11px;color:var(--dim);letter-spacing:2px;text-decoration:none;
-    border:1px solid var(--border);padding:6px 12px;transition:all 0.15s}
-  .back-link:active{border-color:var(--accent);color:var(--accent)}
+:root {
+  --gold:    #c8a000;
+  --gold-hi: #f0d060;
+  --gold-lo: #7a5c00;
+  --hp-red:  #c83020;
+  --text:    #fff;
+  --dim:     rgba(255,255,255,0.5);
+  --r-card:  12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  background: #16213e;
+  background-image:
+    radial-gradient(circle at 25% 15%, rgba(80,40,160,0.35) 0%, transparent 45%),
+    radial-gradient(circle at 75% 85%, rgba(20,70,160,0.35) 0%, transparent 45%);
+  color: var(--text);
+  font-family: 'M PLUS Rounded 1c', 'Hiragino Maru Gothic Pro', sans-serif;
+  min-height: 100vh;
+}
 
-  #content{padding:12px;display:flex;flex-direction:column;gap:10px}
+/* ── toast ── */
+#toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  padding: 12px 24px; border-radius: 50px; font-size: 14px; font-weight: 700;
+  pointer-events: none; z-index: 1000; opacity: 0; transition: opacity 0.25s; white-space: nowrap;
+}
+#toast.show { opacity: 1; }
+#toast.info    { background: rgba(64,196,255,0.92);  color: #001d36; }
+#toast.success { background: rgba(105,240,174,0.92); color: #00251a; }
+#toast.error   { background: rgba(255,82,82,0.92);   color: #fff; }
 
-  .toolbar{display:flex;align-items:center;justify-content:space-between}
-  .toolbar-title{font-size:11px;color:var(--dim);letter-spacing:2px}
-  .btn-refresh{background:none;border:1px solid var(--border);color:var(--dim);
-    font-family:inherit;font-size:11px;letter-spacing:1px;padding:6px 12px;cursor:pointer;
-    -webkit-tap-highlight-color:transparent;transition:all 0.15s}
-  .btn-refresh:active{border-color:var(--accent);color:var(--accent)}
+/* ── header ── */
+#header {
+  background: rgba(0,0,0,0.45); border-bottom: 1px solid var(--gold-lo);
+  padding: 10px 14px; display: flex; align-items: center; gap: 8px;
+  position: sticky; top: 0; z-index: 100;
+}
+.logo { font-size: 15px; font-weight: 900; flex: 1; }
+.logo-m { color: var(--gold-hi); }
+.logo-s { color: #ff7070; }
+.btn-auth {
+  font-family: inherit; font-size: 11px; font-weight: 700; padding: 5px 12px;
+  border: 1px solid rgba(255,255,255,0.2); border-radius: 20px;
+  background: rgba(255,255,255,0.08); color: var(--dim);
+  cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+}
+.btn-auth.logged-in { border-color: #69f0ae; color: #69f0ae; background: rgba(105,240,174,0.1); }
+.back-link {
+  font-size: 11px; color: var(--dim); text-decoration: none;
+  border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; padding: 5px 12px;
+  font-weight: 700; transition: all 0.15s;
+}
+.back-link:active { border-color: var(--gold); color: var(--gold-hi); }
 
-  /* catalog table */
-  .catalog-list{display:flex;flex-direction:column;gap:6px}
-  .catalog-row{display:flex;align-items:center;gap:10px;
-    background:var(--panel);border:1px solid var(--border);padding:10px 12px}
-  .catalog-pos{min-width:24px;font-size:12px;color:var(--dim);text-align:right}
-  .cat-rank-badge{min-width:32px;height:32px;display:flex;align-items:center;justify-content:center;
-    border-radius:2px;font-size:11px;font-weight:bold}
-  .catalog-info{flex:1;min-width:0}
-  .catalog-name{font-size:14px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .catalog-meta{display:flex;gap:8px;margin-top:3px;flex-wrap:wrap}
-  .catalog-meta span{font-size:10px;color:var(--dim)}
-  .catalog-meta .owner{color:#8888aa}
-  .catalog-bp{font-size:20px;font-weight:bold;white-space:nowrap;font-variant-numeric:tabular-nums}
+/* ── filter tabs ── */
+.filter-wrap {
+  padding: 10px 10px 0;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.filter-wrap::-webkit-scrollbar { display: none; }
+.filter-row { display: flex; gap: 6px; padding-bottom: 2px; min-width: max-content; }
+.ftab {
+  padding: 7px 14px; border-radius: 20px; font-family: inherit;
+  font-size: 12px; font-weight: 900; cursor: pointer; border: 2px solid transparent;
+  background: rgba(255,255,255,0.06); color: var(--dim); white-space: nowrap;
+  transition: all 0.15s; -webkit-tap-highlight-color: transparent;
+}
+.ftab.active { background: rgba(200,160,0,0.2); border-color: var(--gold); color: var(--gold-hi); }
+.ftab-SS { color: #c080ff; }
+.ftab-SS.active { background: rgba(192,128,255,0.2); border-color: #c080ff; color: #c080ff; }
+.ftab-S  { color: #ff80c8; }
+.ftab-S.active  { background: rgba(255,128,200,0.2); border-color: #ff80c8; color: #ff80c8; }
+.ftab-A  { color: #ff8040; }
+.ftab-A.active  { background: rgba(255,128,64,0.2);  border-color: #ff8040; color: #ff8040; }
+.ftab-B  { color: #f8e040; }
+.ftab-B.active  { background: rgba(248,224,64,0.2);  border-color: #f8e040; color: #f8e040; }
+.ftab-C  { color: #80d850; }
+.ftab-C.active  { background: rgba(128,216,80,0.2);  border-color: #80d850; color: #80d850; }
+.ftab-D  { color: #88c0ff; }
+.ftab-D.active  { background: rgba(136,192,255,0.2); border-color: #88c0ff; color: #88c0ff; }
+.ftab-E  { color: #b0a868; }
+.ftab-E.active  { background: rgba(176,168,104,0.2); border-color: #b0a868; color: #b0a868; }
 
-  .surface-badge{font-size:9px;padding:1px 5px;border-radius:2px;
-    border:1px solid var(--border);color:var(--dim)}
+/* ── catalog list ── */
+.catalog-wrap { padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+#status-msg { font-size: 13px; color: var(--dim); text-align: center; padding: 32px; }
 
-  #status-msg{font-size:12px;color:var(--dim);text-align:center;padding:24px}
+/* ── mini card ── */
+.mini-card {
+  border: 2px solid var(--gold); border-radius: var(--r-card);
+  padding: 10px 12px; position: relative; overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(240,208,96,0.2) inset;
+}
+.mini-card::before {
+  content: ''; position: absolute; inset: 4px;
+  border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; pointer-events: none;
+}
+/* type backgrounds */
+.mini-card.t-colorless { background: rgba(90,84,48,.28);  border-color: #a09050; }
+.mini-card.t-fire      { background: rgba(108,44,16,.28); border-color: #d04828; }
+.mini-card.t-water     { background: rgba(28,72,152,.28); border-color: #4878c0; }
+.mini-card.t-grass     { background: rgba(28,92,40,.28);  border-color: #3a8030; }
+.mini-card.t-lightning { background: rgba(104,84,8,.28);  border-color: var(--gold); }
+.mini-card.t-psychic   { background: rgba(104,20,72,.28); border-color: #c03080; }
+.mini-card.t-fighting  { background: rgba(76,36,8,.28);   border-color: #804020; }
+.mini-card.t-dragon    { background: rgba(60,24,120,.28); border-color: #7040d0; }
+/* SS shimmer */
+.mini-card.holo::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  background: linear-gradient(115deg,
+    transparent 25%, rgba(255,60,60,.06) 30%, rgba(255,200,60,.06) 37%,
+    rgba(60,255,120,.06) 44%, rgba(60,180,255,.06) 51%,
+    rgba(180,60,255,.06) 58%, transparent 63%);
+  background-size: 300% 300%;
+  animation: holoShimmer 2.5s linear infinite;
+  pointer-events: none;
+}
+@keyframes holoShimmer { 0%{background-position:0% 50%} 100%{background-position:100% 50%} }
 
-  /* rank colors */
-  .rank-E{color:#888}.rank-D{color:#66aaff}.rank-C{color:#44ff88}
-  .rank-B{color:#ffff44}.rank-A{color:#ff8800}.rank-S{color:#ff2244}.rank-SS{color:#ff00ff}
-  .rb-E{background:rgba(136,136,136,.15);color:#888;   border:1px solid #888}
-  .rb-D{background:rgba(102,170,255,.15);color:#66aaff;border:1px solid #66aaff}
-  .rb-C{background:rgba(68,255,136,.15); color:#44ff88;border:1px solid #44ff88}
-  .rb-B{background:rgba(255,255,68,.15); color:#ffff44;border:1px solid #ffff44}
-  .rb-A{background:rgba(255,136,0,.15);  color:#ff8800;border:1px solid #ff8800}
-  .rb-S{background:rgba(255,34,68,.15);  color:#ff2244;border:1px solid #ff2244}
-  .rb-SS{background:rgba(255,0,255,.15); color:#ff00ff;border:1px solid #ff00ff}
+/* own card highlight */
+.mini-card.own-card { box-shadow: 0 0 0 1px rgba(240,208,96,0.3) inset, 0 0 12px rgba(200,160,0,0.2); }
+
+/* card rows */
+.mc-top { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.mc-pos { min-width: 20px; font-size: 11px; color: var(--dim); text-align: right; flex-shrink: 0; }
+.mc-stage {
+  flex-shrink: 0; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 4px; padding: 1px 6px; font-size: 9px; font-weight: 700;
+  letter-spacing: 0.5px; color: rgba(255,255,255,0.7); white-space: nowrap;
+}
+.mc-name { flex: 1; font-size: 14px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mc-hp-area { display: flex; align-items: baseline; gap: 2px; flex-shrink: 0; }
+.mc-hp-lbl { font-size: 9px; font-weight: 900; color: var(--hp-red); }
+.mc-hp { font-size: 20px; font-weight: 900; color: var(--hp-red); font-variant-numeric: tabular-nums; }
+.type-pip {
+  width: 18px; height: 18px; border-radius: 50%; margin-left: 4px; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+}
+.tp-colorless { background: radial-gradient(circle,#d4c868,#908840); color: #2a2000; }
+.tp-fire      { background: radial-gradient(circle,#ff8040,#c04010); color: #fff; }
+.tp-water     { background: radial-gradient(circle,#88c0ff,#3870c0); color: #fff; }
+.tp-grass     { background: radial-gradient(circle,#80d850,#3a8030); color: #fff; }
+.tp-lightning { background: radial-gradient(circle,#f8e040,#b08800); color: #2a1800; }
+.tp-psychic   { background: radial-gradient(circle,#ff80c8,#c03080); color: #fff; }
+.tp-fighting  { background: radial-gradient(circle,#c08040,#804020); color: #fff; }
+.tp-dragon    { background: radial-gradient(circle,#9848ff,#5010c0); color: #fff; }
+
+.mc-bot { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.mc-owner { font-size: 11px; color: rgba(255,255,255,0.6); white-space: nowrap; }
+.mc-age   { font-size: 11px; color: var(--dim); white-space: nowrap; }
+.mc-surf  {
+  font-size: 10px; padding: 2px 8px; border-radius: 20px;
+  background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.14);
+  color: rgba(255,255,255,0.6); white-space: nowrap;
+}
+.btn-edit {
+  display: none; margin-left: auto; padding: 4px 12px; flex-shrink: 0;
+  border: 1px solid var(--gold); border-radius: 20px;
+  background: rgba(200,160,0,0.15); color: var(--gold-hi);
+  font-family: inherit; font-size: 11px; font-weight: 700;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.btn-edit.visible { display: inline-block; }
+
+/* rank colors */
+.rank-E  { color: #b0a868; }
+.rank-D  { color: #88c0ff; }
+.rank-C  { color: #80d850; }
+.rank-B  { color: #f8e040; }
+.rank-A  { color: #ff8040; }
+.rank-S  { color: #ff80c8; }
+.rank-SS { color: #c080ff; }
+
+/* ── edit modal ── */
+#edit-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.82);
+  display: none; align-items: center; justify-content: center;
+  z-index: 500; padding: 20px; backdrop-filter: blur(8px);
+}
+#edit-overlay.active { display: flex; }
+.modal {
+  background: linear-gradient(155deg,#2c1e5e,#1e3060);
+  border: 3px solid var(--gold); border-radius: 20px;
+  padding: 24px; width: 100%; max-width: 320px;
+  box-shadow: 0 0 0 2px rgba(240,208,96,0.25) inset, 0 20px 60px rgba(0,0,0,0.6);
+}
+.modal-title { font-size: 16px; font-weight: 900; color: var(--gold-hi); margin-bottom: 14px; text-align: center; }
+.modal input {
+  width: 100%; background: rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.15);
+  color: var(--text); font-family: inherit; font-size: 15px; font-weight: 700;
+  padding: 11px 14px; outline: none; border-radius: 10px;
+  transition: border-color 0.2s; margin-bottom: 8px;
+}
+.modal input::placeholder { color: rgba(255,255,255,0.3); }
+.modal input:focus { border-color: var(--gold); }
+.birth-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.birth-row input { flex: 1; margin-bottom: 0; }
+.modal-buttons { display: flex; gap: 8px; margin-top: 4px; }
+.btn-confirm {
+  flex: 1; padding: 13px; border: none; border-radius: 20px;
+  background: linear-gradient(135deg,var(--gold-hi),var(--gold));
+  color: #2a1800; font-family: inherit; font-size: 14px; font-weight: 900; cursor: pointer;
+}
+.btn-cancel {
+  flex: 1; padding: 13px; border: 2px solid rgba(255,255,255,0.2); border-radius: 20px;
+  background: transparent; color: var(--dim); font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+}
+
+/* ── toolbar ── */
+.toolbar { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px 0; }
+.toolbar-count { font-size: 11px; color: var(--dim); font-weight: 700; }
+.btn-refresh {
+  font-family: inherit; font-size: 11px; font-weight: 700; padding: 6px 14px;
+  border: 1px solid rgba(255,255,255,0.15); border-radius: 20px;
+  background: rgba(255,255,255,0.06); color: var(--dim);
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.btn-refresh:active { border-color: var(--gold); color: var(--gold-hi); }
 </style>
 </head>
 <body>
+<div id="toast"></div>
+
+<!-- Edit modal -->
+<div id="edit-overlay">
+  <div class="modal">
+    <div class="modal-title">✏️ メンコをへんしゅう</div>
+    <input type="text"   id="edit-name"  placeholder="メンコのなまえ" maxlength="20">
+    <input type="text"   id="edit-owner" placeholder="もちぬし" maxlength="20">
+    <div class="birth-row">
+      <input type="number" id="edit-year"  placeholder="つくられた年" min="1900" max="2030">
+      <input type="number" id="edit-month" placeholder="月" min="1" max="12">
+    </div>
+    <div class="modal-buttons">
+      <button class="btn-confirm" onclick="confirmEdit()">💾 ほぞん！</button>
+      <button class="btn-cancel"  onclick="closeEdit()">やめる</button>
+    </div>
+  </div>
+</div>
+
 <div id="header">
-  <div class="logo">MENKO <span>SCOUTER</span> // 名鑑</div>
+  <div class="logo"><span class="logo-m">メンコ</span><span class="logo-s">スカウター</span> 名鑑</div>
+  <button class="btn-auth" id="btn-auth" onclick="handleAuth()">ログイン</button>
   <a href="index.html" class="back-link">← HOME</a>
 </div>
 
-<div id="content">
-  <div class="toolbar">
-    <span class="toolbar-title">// MENKO CATALOG</span>
-    <button class="btn-refresh" onclick="loadCatalog()">↺ 更新</button>
+<div class="filter-wrap">
+  <div class="filter-row">
+    <button class="ftab active"  onclick="setFilter('all')">⭐ すべて</button>
+    <button class="ftab ftab-SS" onclick="setFilter('SS')">🌈 SS</button>
+    <button class="ftab ftab-S"  onclick="setFilter('S')">✨ S</button>
+    <button class="ftab ftab-A"  onclick="setFilter('A')">💫 A</button>
+    <button class="ftab ftab-B"  onclick="setFilter('B')">🌟 B</button>
+    <button class="ftab ftab-C"  onclick="setFilter('C')">⭐⭐⭐ C</button>
+    <button class="ftab ftab-D"  onclick="setFilter('D')">⭐⭐ D</button>
+    <button class="ftab ftab-E"  onclick="setFilter('E')">⭐ E</button>
   </div>
-  <div class="catalog-list" id="catalog-list">
-    <div id="status-msg">読み込み中...</div>
-  </div>
+</div>
+
+<div class="toolbar">
+  <span class="toolbar-count" id="record-count"></span>
+  <button class="btn-refresh" onclick="loadCatalog()">↺ こうしん</button>
+</div>
+
+<div class="catalog-wrap" id="catalog-wrap">
+  <div id="status-msg">よみこみちゅう…</div>
 </div>
 
 <script>
 let db = null;
+let currentUser = null;
+let allRecords = [];
+let currentFilter = 'all';
+let editingRecord = null;
+let toastTimer = null;
 
-async function init() {
-  try {
-    const res = await fetch('/api/config');
-    if (!res.ok) throw new Error('config');
-    const { url, anonKey } = await res.json();
-    db = window.supabase.createClient(url, anonKey);
-    loadCatalog();
-  } catch(e) {
-    $('status-msg').textContent = 'DB接続失敗: ' + e.message;
-  }
-}
+function $(id) { return document.getElementById(id); }
 
-async function loadCatalog() {
-  const list = $('catalog-list');
-  list.innerHTML = '<div id="status-msg">読み込み中...</div>';
-
-  const { data, error } = await db
-    .from('menko_records')
-    .select('name, owner, bp, birth_year, birth_month, surface, created_at')
-    .order('bp', { ascending: false })
-    .limit(100);
-
-  if (error) {
-    list.innerHTML = '<div id="status-msg">読み込みエラー: ' + escapeHtml(error.message) + '</div>';
-    return;
-  }
-  if (!data || data.length === 0) {
-    list.innerHTML = '<div id="status-msg">記録なし</div>';
-    return;
-  }
-
-  list.innerHTML = data.map((r, idx) => {
-    const rank = getRank(r.bp);
-    const age  = calcAge(r.birth_year, r.birth_month);
-    const surfLabel = { concrete:'コンクリート', asphalt:'アスファルト', dirt:'土' }[r.surface] || r.surface || '-';
-    return `<div class="catalog-row">
-      <div class="catalog-pos">${idx + 1}</div>
-      <div class="cat-rank-badge rb-${rank}">${rank}</div>
-      <div class="catalog-info">
-        <div class="catalog-name">${escapeHtml(r.name)}</div>
-        <div class="catalog-meta">
-          <span class="owner">▶ ${escapeHtml(r.owner || '不明')}</span>
-          <span>機齢: ${age}</span>
-          <span class="surface-badge">${surfLabel}</span>
-        </div>
-      </div>
-      <div class="catalog-bp rank-${rank}">${r.bp.toLocaleString()}</div>
-    </div>`;
-  }).join('');
-}
+// ── type / rank data ──
+const RANK_TYPE  = { E:'colorless',D:'water',C:'grass',B:'lightning',A:'fire',S:'psychic',SS:'dragon' };
+const RANK_STAGE = { E:'Basic',D:'Basic',C:'Stage 1',B:'Stage 2',A:'Stage 2',S:'EX',SS:'VMAX' };
+const TYPE_DATA  = {
+  colorless: { cls:'t-colorless', pip:'tp-colorless', emoji:'⭐' },
+  fire:      { cls:'t-fire',      pip:'tp-fire',      emoji:'🔥' },
+  water:     { cls:'t-water',     pip:'tp-water',     emoji:'💧' },
+  grass:     { cls:'t-grass',     pip:'tp-grass',     emoji:'🌿' },
+  lightning: { cls:'t-lightning', pip:'tp-lightning', emoji:'⚡' },
+  psychic:   { cls:'t-psychic',   pip:'tp-psychic',   emoji:'🔮' },
+  fighting:  { cls:'t-fighting',  pip:'tp-fighting',  emoji:'✊' },
+  dragon:    { cls:'t-dragon',    pip:'tp-dragon',    emoji:'🐉' },
+};
 
 function getRank(bp) {
   if (bp < 100)  return 'E';
@@ -153,7 +331,195 @@ function escapeHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function $(id) { return document.getElementById(id); }
+function showToast(msg, type = 'info') {
+  const el = $('toast');
+  el.textContent = msg; el.className = 'show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = ''; }, 2200);
+}
+
+// ── auth ──
+function updateAuthBtn() {
+  const btn = $('btn-auth');
+  if (currentUser) {
+    const name = currentUser.user_metadata?.name || currentUser.email?.split('@')[0] || 'ユーザー';
+    btn.textContent = name.length > 7 ? name.slice(0, 6) + '…' : name;
+    btn.classList.add('logged-in');
+    btn.title = 'タップでログアウト: ' + currentUser.email;
+  } else {
+    btn.textContent = 'ログイン';
+    btn.classList.remove('logged-in');
+    btn.title = 'Googleでログイン';
+  }
+  // Re-render edit buttons without full reload
+  updateEditButtons();
+}
+
+async function handleAuth() {
+  if (!db) { showToast('よみこみちゅう…', 'info'); return; }
+  if (currentUser) {
+    if (confirm(currentUser.email + '\nログアウトしますか？')) {
+      await db.auth.signOut();
+    }
+  } else {
+    await db.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.href }
+    });
+  }
+}
+
+function updateEditButtons() {
+  document.querySelectorAll('.btn-edit').forEach(btn => {
+    const uid = btn.dataset.userId;
+    if (currentUser && uid && uid === currentUser.id) {
+      btn.classList.add('visible');
+    } else {
+      btn.classList.remove('visible');
+    }
+  });
+}
+
+// ── supabase init ──
+async function init() {
+  try {
+    const res = await fetch('/api/config');
+    if (!res.ok) throw new Error('config');
+    const { url, anonKey } = await res.json();
+    db = window.supabase.createClient(url, anonKey);
+
+    // Check session
+    const { data: { session } } = await db.auth.getSession();
+    if (session) { currentUser = session.user; updateAuthBtn(); }
+
+    db.auth.onAuthStateChange((_, session) => {
+      currentUser = session?.user || null;
+      updateAuthBtn();
+    });
+
+    loadCatalog();
+  } catch(e) {
+    $('status-msg').textContent = 'よみこみできなかったよ… ' + e.message;
+  }
+}
+
+// ── filter ──
+function setFilter(rank) {
+  currentFilter = rank;
+  document.querySelectorAll('.ftab').forEach(t => t.classList.remove('active'));
+  const sel = rank === 'all'
+    ? document.querySelectorAll('.ftab')[0]
+    : document.querySelector('.ftab-' + rank);
+  if (sel) sel.classList.add('active');
+  renderCatalog();
+}
+
+// ── load ──
+async function loadCatalog() {
+  const wrap = $('catalog-wrap');
+  wrap.innerHTML = '<div id="status-msg">よみこみちゅう…</div>';
+
+  const { data, error } = await db
+    .from('menko_records')
+    .select('id, name, owner, bp, birth_year, birth_month, surface, user_id, created_at')
+    .order('bp', { ascending: false })
+    .limit(200);
+
+  if (error) {
+    wrap.innerHTML = '<div id="status-msg">よみこみできなかったよ… ' + escapeHtml(error.message) + '</div>';
+    return;
+  }
+  if (!data || data.length === 0) {
+    wrap.innerHTML = '<div id="status-msg">まだメンコがないよ！</div>';
+    return;
+  }
+  allRecords = data;
+  renderCatalog();
+}
+
+// ── render ──
+function renderCatalog() {
+  const wrap = $('catalog-wrap');
+  const filtered = currentFilter === 'all'
+    ? allRecords
+    : allRecords.filter(r => getRank(r.bp) === currentFilter);
+
+  if (filtered.length === 0) {
+    wrap.innerHTML = '<div id="status-msg">このランクのメンコはまだないよ！</div>';
+    $('record-count').textContent = '';
+    return;
+  }
+
+  $('record-count').textContent = filtered.length + 'けん';
+
+  wrap.innerHTML = filtered.map((r, idx) => {
+    const rank    = getRank(r.bp);
+    const type    = RANK_TYPE[rank];
+    const td      = TYPE_DATA[type] || TYPE_DATA.colorless;
+    const stage   = RANK_STAGE[rank] || 'Basic';
+    const surfLbl = { concrete:'🏗 コンクリート', asphalt:'🛣 アスファルト', dirt:'🌱 つち' }[r.surface] || r.surface || '不明';
+    const age     = calcAge(r.birth_year, r.birth_month);
+    const isHolo  = rank === 'SS';
+    const isOwn   = currentUser && r.user_id === currentUser.id;
+
+    return `<div class="mini-card ${td.cls}${isHolo ? ' holo' : ''}${isOwn ? ' own-card' : ''}" id="mc-${r.id}">
+      <div class="mc-top">
+        <span class="mc-pos">${idx + 1}</span>
+        <span class="mc-stage">${stage}</span>
+        <span class="mc-name">${escapeHtml(r.name)}</span>
+        <div class="mc-hp-area">
+          <span class="mc-hp-lbl">HP</span>
+          <span class="mc-hp rank-${rank}">${r.bp.toLocaleString()}</span>
+          <span class="type-pip ${td.pip}">${td.emoji}</span>
+        </div>
+      </div>
+      <div class="mc-bot">
+        <span class="mc-owner">▶ ${escapeHtml(r.owner || '不明')}</span>
+        <span class="mc-age">機齢: ${age}</span>
+        <span class="mc-surf">${surfLbl}</span>
+        <button class="btn-edit${isOwn ? ' visible' : ''}"
+          data-user-id="${escapeHtml(r.user_id || '')}"
+          onclick="openEdit(${JSON.stringify(r).replace(/"/g,'&quot;')})">✏ へんしゅう</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── edit ──
+function openEdit(record) {
+  editingRecord = record;
+  $('edit-name').value  = record.name  || '';
+  $('edit-owner').value = record.owner || '';
+  $('edit-year').value  = record.birth_year  || '';
+  $('edit-month').value = record.birth_month || '';
+  $('edit-overlay').classList.add('active');
+  setTimeout(() => $('edit-name').focus(), 100);
+}
+function closeEdit() { $('edit-overlay').classList.remove('active'); editingRecord = null; }
+
+async function confirmEdit() {
+  if (!editingRecord || !db || !currentUser) return;
+  const name  = $('edit-name').value.trim()  || editingRecord.name;
+  const owner = $('edit-owner').value.trim() || editingRecord.owner;
+  const year  = parseInt($('edit-year').value)  || null;
+  const month = parseInt($('edit-month').value) || null;
+  closeEdit();
+  showToast('ほぞんちゅう…', 'info');
+  const { error } = await db
+    .from('menko_records')
+    .update({ name, owner, birth_year: year, birth_month: month })
+    .eq('id', editingRecord.id);
+  if (error) { showToast('ほぞんできなかった…', 'error'); console.error(error); return; }
+  showToast('へんしゅうできたよ！ 🎉', 'success');
+  // Update local data and re-render
+  const idx = allRecords.findIndex(r => r.id === editingRecord.id);
+  if (idx >= 0) Object.assign(allRecords[idx], { name, owner, birth_year: year, birth_month: month });
+  renderCatalog();
+}
+
+['edit-name','edit-owner','edit-year','edit-month'].forEach(id => {
+  $(id).addEventListener('keydown', e => { if (e.key === 'Enter') confirmEdit(); });
+});
 
 init();
 </script>

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>MENKO SCOUTER // メンコリスト管理</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  :root{--bg:#0a0a0f;--panel:#111118;--border:#2a2a3a;--accent:#00ff88;--accent2:#ff6600;--danger:#ff2244;--text:#e0e0e0;--dim:#666;--glow:0 0 12px rgba(0,255,136,0.4)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;min-height:100vh}
+  #header{background:var(--panel);border-bottom:1px solid var(--danger);padding:10px 16px;
+    display:flex;align-items:center;justify-content:space-between;
+    box-shadow:0 2px 20px rgba(255,34,68,0.15)}
+  .logo{font-size:15px;font-weight:bold;letter-spacing:3px;color:var(--danger)}
+  .back-link{font-size:11px;color:var(--dim);letter-spacing:2px;text-decoration:none;
+    border:1px solid var(--border);padding:6px 12px;transition:all 0.15s}
+  .back-link:active{border-color:var(--accent);color:var(--accent)}
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 20px;
+    border-radius:2px;font-size:12px;letter-spacing:2px;pointer-events:none;z-index:1000;
+    opacity:0;transition:opacity 0.2s;white-space:nowrap}
+  #toast.show{opacity:1}
+  #toast.info   {background:#1a1a2a;border:1px solid var(--accent);color:var(--accent)}
+  #toast.success{background:#0a1a12;border:1px solid var(--accent);color:var(--accent)}
+  #toast.error  {background:#1a0a0a;border:1px solid var(--danger);color:var(--danger)}
+  /* gate */
+  #pw-gate{display:flex;flex-direction:column;align-items:center;justify-content:center;
+    min-height:60vh;gap:20px;padding:24px}
+  .gate-icon{font-size:48px}
+  .gate-title{font-size:16px;letter-spacing:4px;color:var(--danger)}
+  #pw-gate input{width:100%;max-width:280px;background:var(--bg);border:1px solid var(--border);
+    color:var(--text);font-family:inherit;font-size:18px;padding:14px;outline:none;
+    text-align:center;letter-spacing:4px;transition:border-color 0.2s}
+  #pw-gate input:focus{border-color:var(--danger)}
+  .btn-unlock{background:transparent;border:2px solid var(--danger);color:var(--danger);
+    font-family:inherit;font-size:14px;font-weight:bold;letter-spacing:3px;padding:14px 40px;
+    cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all 0.2s}
+  .btn-unlock:active{background:rgba(255,34,68,0.15);transform:scale(0.97)}
+  /* content */
+  #content{display:none;padding:12px;flex-direction:column;gap:12px}
+  .toolbar{display:flex;align-items:center;justify-content:space-between}
+  .toolbar-info{font-size:11px;color:var(--dim);letter-spacing:2px}
+  .btn-refresh{background:none;border:1px solid var(--border);color:var(--dim);
+    font-family:inherit;font-size:11px;letter-spacing:1px;padding:6px 12px;cursor:pointer;
+    -webkit-tap-highlight-color:transparent;transition:all 0.15s}
+  .btn-refresh:active{border-color:var(--accent);color:var(--accent)}
+  /* record list */
+  .record-list{display:flex;flex-direction:column;gap:6px}
+  .record-row{display:flex;align-items:center;gap:10px;
+    background:var(--panel);border:1px solid var(--border);padding:10px 12px}
+  .rec-rank{min-width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+    border-radius:2px;font-size:11px;font-weight:bold}
+  .rec-info{flex:1;min-width:0}
+  .rec-name{font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rec-meta{font-size:10px;color:var(--dim);margin-top:3px}
+  .rec-bp{font-size:18px;font-weight:bold;white-space:nowrap;font-variant-numeric:tabular-nums;margin-right:8px}
+  .btn-delete{background:transparent;border:1px solid var(--danger);color:var(--danger);
+    font-family:inherit;font-size:11px;letter-spacing:1px;padding:6px 10px;cursor:pointer;
+    -webkit-tap-highlight-color:transparent;flex-shrink:0;transition:all 0.15s}
+  .btn-delete:active{background:rgba(255,34,68,0.15)}
+  #status-msg{font-size:12px;color:var(--dim);text-align:center;padding:24px;letter-spacing:1px}
+  /* rank colors */
+  .rank-E{color:#888}.rank-D{color:#66aaff}.rank-C{color:#44ff88}
+  .rank-B{color:#ffff44}.rank-A{color:#ff8800}.rank-S{color:#ff2244}.rank-SS{color:#ff00ff}
+  .rb-E{background:rgba(136,136,136,.15);color:#888;border:1px solid #888}
+  .rb-D{background:rgba(102,170,255,.15);color:#66aaff;border:1px solid #66aaff}
+  .rb-C{background:rgba(68,255,136,.15);color:#44ff88;border:1px solid #44ff88}
+  .rb-B{background:rgba(255,255,68,.15);color:#ffff44;border:1px solid #ffff44}
+  .rb-A{background:rgba(255,136,0,.15);color:#ff8800;border:1px solid #ff8800}
+  .rb-S{background:rgba(255,34,68,.15);color:#ff2244;border:1px solid #ff2244}
+  .rb-SS{background:rgba(255,0,255,.15);color:#ff00ff;border:1px solid #ff00ff}
+</style>
+</head>
+<body>
+<div id="header">
+  <div class="logo">// メンコリスト管理</div>
+  <a href="admin.html" class="back-link">← ADMIN</a>
+</div>
+<div id="toast"></div>
+
+<!-- PASSWORD GATE -->
+<div id="pw-gate">
+  <div class="gate-icon">🗑️</div>
+  <div class="gate-title">// DELETE ACCESS</div>
+  <input type="password" id="pw-input" placeholder="PASSWORD" maxlength="30">
+  <button class="btn-unlock" onclick="checkPassword()">UNLOCK</button>
+</div>
+
+<!-- CONTENT -->
+<div id="content">
+  <div class="toolbar">
+    <span class="toolbar-info" id="record-count">-- 件</span>
+    <button class="btn-refresh" onclick="loadRecords()">↺ 更新</button>
+  </div>
+  <div class="record-list" id="record-list">
+    <div id="status-msg">よみこみちゅう…</div>
+  </div>
+</div>
+
+<script>
+let db = null;
+let adminPassword = null;
+let toastTimer = null;
+let totalCount = 0;
+
+function $(id) { return document.getElementById(id); }
+
+function showToast(msg, type='info') {
+  const el = $('toast');
+  el.textContent = msg; el.className = 'show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className=''; }, 2200);
+}
+
+function getRank(bp) {
+  if (bp < 100)  return 'E';
+  if (bp < 300)  return 'D';
+  if (bp < 700)  return 'C';
+  if (bp < 1500) return 'B';
+  if (bp < 3000) return 'A';
+  if (bp < 6000) return 'S';
+  return 'SS';
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function init() {
+  try {
+    const res = await fetch('/api/config');
+    if (!res.ok) throw new Error('config');
+    const { url, anonKey, adminPassword: pw } = await res.json();
+    adminPassword = pw;
+    db = window.supabase.createClient(url, anonKey);
+  } catch(e) {
+    showToast('設定読み込み失敗', 'error');
+  }
+}
+
+function checkPassword() {
+  if (!adminPassword) { showToast('設定未読み込み', 'error'); return; }
+  if ($('pw-input').value === adminPassword) {
+    $('pw-gate').style.display = 'none';
+    const c = $('content');
+    c.style.display = 'flex';
+    loadRecords();
+  } else {
+    showToast('パスワードが違います', 'error');
+    $('pw-input').value = '';
+  }
+}
+
+async function loadRecords() {
+  const list = $('record-list');
+  list.innerHTML = '<div id="status-msg">よみこみちゅう…</div>';
+  $('record-count').textContent = '-- 件';
+
+  const { data, error } = await db
+    .from('menko_records')
+    .select('id, name, owner, bp, surface, created_at')
+    .order('bp', { ascending: false })
+    .limit(500);
+
+  if (error) {
+    list.innerHTML = '<div id="status-msg">よみこみエラー: ' + escapeHtml(error.message) + '</div>';
+    return;
+  }
+  if (!data || data.length === 0) {
+    list.innerHTML = '<div id="status-msg">記録なし</div>';
+    $('record-count').textContent = '0 件';
+    return;
+  }
+
+  totalCount = data.length;
+  $('record-count').textContent = totalCount + ' 件';
+
+  list.innerHTML = data.map((r, idx) => {
+    const rank    = getRank(r.bp);
+    const surfLbl = { concrete:'コンクリート', asphalt:'アスファルト', dirt:'土' }[r.surface] || r.surface || '-';
+    const date    = new Date(r.created_at).toLocaleDateString('ja-JP');
+    return `<div class="record-row" id="row-${r.id}">
+      <span style="font-size:12px;color:var(--dim);min-width:20px;text-align:right">${idx+1}</span>
+      <div class="rec-rank rb-${rank}">${rank}</div>
+      <div class="rec-info">
+        <div class="rec-name">${escapeHtml(r.name)}</div>
+        <div class="rec-meta">${escapeHtml(r.owner||'不明')} | ${surfLbl} | ${date}</div>
+      </div>
+      <span class="rec-bp rank-${rank}">${r.bp.toLocaleString()}</span>
+      <button class="btn-delete" onclick="deleteRecord('${r.id}', '${escapeHtml(r.name)}')">DEL</button>
+    </div>`;
+  }).join('');
+}
+
+async function deleteRecord(id, name) {
+  if (!confirm(`「${name}」を削除しますか？\nこの操作は元に戻せません。`)) return;
+
+  showToast('さくじょちゅう…', 'info');
+  const { error } = await db.from('menko_records').delete().eq('id', id);
+  if (error) {
+    showToast('さくじょ失敗: ' + error.message, 'error');
+    console.error(error);
+    return;
+  }
+  showToast('さくじょしました', 'success');
+  const row = document.getElementById('row-' + id);
+  if (row) row.remove();
+  totalCount--;
+  $('record-count').textContent = totalCount + ' 件';
+}
+
+$('pw-input').addEventListener('keydown', e => { if (e.key === 'Enter') checkPassword(); });
+init();
+</script>
+</body>
+</html>

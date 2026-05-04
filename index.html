@@ -7,6 +7,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>メンコスカウター</title>
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#c8a000">
+<link rel="apple-touch-icon" href="/icons/icon.svg">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 :root {
@@ -394,6 +397,15 @@ html, body {
 }
 
 /* rank colors */
+/* auth button */
+.btn-header-auth {
+  font-family:inherit;font-size:11px;font-weight:700;padding:5px 11px;
+  border:1px solid rgba(255,255,255,0.18);border-radius:20px;
+  background:rgba(255,255,255,0.07);color:var(--dim);
+  cursor:pointer;transition:all 0.15s;-webkit-tap-highlight-color:transparent;
+  white-space:nowrap;max-width:88px;overflow:hidden;text-overflow:ellipsis;
+}
+.btn-header-auth.logged-in{border-color:#69f0ae;color:#69f0ae;background:rgba(105,240,174,0.1);}
 .rank-E  { color:#b0a868; }
 .rank-D  { color:#88c0ff; }
 .rank-C  { color:#80d850; }
@@ -426,6 +438,7 @@ html, body {
 <div id="app">
   <div id="header">
     <div class="logo"><span class="logo-m">メンコ</span><span class="logo-s">スカウター</span></div>
+    <button class="btn-header-auth" id="btn-auth" onclick="handleAuth()">ログイン</button>
     <div class="status-wrap">
       <span class="status-dot" id="status-dot"></span>
       <span id="status-label">まだだよ</span>
@@ -569,6 +582,7 @@ html, body {
 <script>
 // ── SUPABASE ──
 let db = null;
+let currentUser = null;
 const DEVICE_ID_KEY = 'menko_device_id';
 
 function getDeviceId() {
@@ -593,6 +607,46 @@ async function initSupabase() {
     console.warn('Supabase init failed:', e.message);
     setDbIndicator(false);
     return false;
+  }
+}
+
+// ── AUTH ──
+async function checkAuth() {
+  if (!db) return;
+  const { data: { session } } = await db.auth.getSession();
+  if (session) { currentUser = session.user; updateAuthBtn(); }
+  db.auth.onAuthStateChange((_, session) => {
+    currentUser = session?.user || null;
+    updateAuthBtn();
+  });
+}
+
+function updateAuthBtn() {
+  const btn = $('btn-auth');
+  if (!btn) return;
+  if (currentUser) {
+    const name = currentUser.user_metadata?.name || currentUser.email?.split('@')[0] || 'ユーザー';
+    btn.textContent = name.length > 7 ? name.slice(0, 6) + '…' : name;
+    btn.classList.add('logged-in');
+    btn.title = 'タップでログアウト';
+  } else {
+    btn.textContent = 'ログイン';
+    btn.classList.remove('logged-in');
+    btn.title = 'Googleでログイン';
+  }
+}
+
+async function handleAuth() {
+  if (!db) { showToast('まず⚡スタートをおしてね', 'info'); return; }
+  if (currentUser) {
+    if (confirm(currentUser.email + '\nログアウトしますか？')) {
+      await db.auth.signOut();
+    }
+  } else {
+    await db.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + '/' }
+    });
   }
 }
 
@@ -780,6 +834,7 @@ async function finishCalibration() {
   startContinuousMonitor();
   updateCardType(SURF_TYPE[state.surface] || 'fighting');
   await initSupabase();
+  await checkAuth();
   await loadAdminConfig();
 }
 
@@ -1014,6 +1069,7 @@ async function confirmSave() {
     birth_year: year, birth_month: month, surface: state.surface,
     bp: state.lastBP, seismic: state.lastSeismic, jerk: state.lastJerk,
     peak_g: state.lastPeakG, waveform: state.lastWaveform,
+    user_id: currentUser ? currentUser.id : null,
   });
   if (error) { showToast('ほぞんできなかった…', 'error'); console.error(error); return; }
   showToast('ほぞんできたよ！ 🎉', 'success');
@@ -1025,6 +1081,15 @@ async function confirmSave() {
 });
 
 window.addEventListener('resize', () => { if (state.phase === 'main') initSeisCanvas(); });
+
+// Early Supabase init handles OAuth callback on redirect-back
+(async () => { await initSupabase(); await checkAuth(); })();
+
+// PWA service worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => {}); });
+}
+
 showScreen('gate');
 </script>
 </body>
