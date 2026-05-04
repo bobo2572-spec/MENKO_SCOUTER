@@ -5,266 +5,563 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>MENKO SCOUTER</title>
+<title>メンコスカウター</title>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
-  :root {
-    --bg:#0a0a0f; --panel:#111118; --border:#2a2a3a;
-    --accent:#00ff88; --accent2:#ff6600; --danger:#ff2244;
-    --text:#e0e0e0; --dim:#666;
-    --glow:0 0 12px rgba(0,255,136,0.4);
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  html,body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;min-height:100vh;overflow-x:hidden}
+:root {
+  --gold:    #c8a000;
+  --gold-hi: #f0d060;
+  --gold-lo: #7a5c00;
+  --hp-red:  #c83020;
+  --text:    #fff;
+  --dim:     rgba(255,255,255,0.5);
+  --r-card:  16px;
+  --r-btn:   50px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  background: #16213e;
+  background-image:
+    radial-gradient(circle at 25% 15%, rgba(80,40,160,0.35) 0%, transparent 45%),
+    radial-gradient(circle at 75% 85%, rgba(20,70,160,0.35) 0%, transparent 45%);
+  color: var(--text);
+  font-family: 'M PLUS Rounded 1c', 'Hiragino Maru Gothic Pro', sans-serif;
+  min-height: 100vh; overflow-x: hidden;
+}
 
-  /* crack */
-  #crack-overlay{position:fixed;inset:0;pointer-events:none;z-index:999;opacity:0;transition:opacity 0.1s}
-  #crack-overlay.active{opacity:1;animation:crackFade 0.8s forwards}
-  @keyframes crackFade{0%{opacity:1}60%{opacity:0.6}100%{opacity:0}}
-  #crack-canvas{width:100%;height:100%}
+/* ── star overlay ── */
+#star-overlay { position:fixed;inset:0;pointer-events:none;z-index:999;opacity:0;transition:opacity 0.1s; }
+#star-overlay.active { opacity:1;animation:starFade 1s forwards; }
+@keyframes starFade { 0%{opacity:1} 70%{opacity:0.7} 100%{opacity:0} }
+#star-canvas { width:100%;height:100%; }
 
-  /* toast */
-  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 20px;
-    border-radius:2px;font-size:12px;letter-spacing:2px;pointer-events:none;z-index:1000;
-    opacity:0;transition:opacity 0.2s;white-space:nowrap}
-  #toast.show{opacity:1}
-  #toast.info   {background:#1a1a2a;border:1px solid var(--accent);color:var(--accent)}
-  #toast.success{background:#0a1a12;border:1px solid var(--accent);color:var(--accent)}
-  #toast.error  {background:#1a0a0a;border:1px solid var(--danger);color:var(--danger)}
+/* ── toast ── */
+#toast {
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  padding:12px 24px;border-radius:var(--r-btn);font-size:14px;font-weight:700;
+  pointer-events:none;z-index:1000;opacity:0;transition:opacity 0.25s;white-space:nowrap;
+}
+#toast.show { opacity:1; }
+#toast.info    { background:rgba(64,196,255,0.92);color:#001d36; }
+#toast.success { background:rgba(105,240,174,0.92);color:#00251a; }
+#toast.error   { background:rgba(255,82,82,0.92);color:#fff; }
 
-  #app{display:flex;flex-direction:column;min-height:100vh}
+/* ── app shell ── */
+#app { display:flex;flex-direction:column;min-height:100vh; }
 
-  /* header */
-  #header{background:var(--panel);border-bottom:1px solid var(--accent);padding:10px 16px;
-    display:flex;align-items:center;justify-content:space-between;
-    box-shadow:0 2px 20px rgba(0,255,136,0.15)}
-  .logo{font-size:18px;font-weight:bold;letter-spacing:3px;color:var(--accent);text-shadow:var(--glow)}
-  .logo span{color:var(--accent2)}
-  .status-dot{width:8px;height:8px;border-radius:50%;background:var(--dim);display:inline-block;margin-right:6px;transition:background 0.3s}
-  .status-dot.active{background:var(--accent);box-shadow:var(--glow);animation:pulse 1s infinite}
-  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
-  #status-label{font-size:11px;color:var(--dim);letter-spacing:1px}
-  #db-indicator{font-size:9px;letter-spacing:1px;padding:2px 6px;border-radius:2px;margin-left:8px}
-  #db-indicator.online {border:1px solid #00aa55;color:#00aa55}
-  #db-indicator.offline{border:1px solid var(--dim);color:var(--dim)}
+/* ── header ── */
+#header {
+  padding:10px 16px;display:flex;align-items:center;justify-content:space-between;
+  background:rgba(0,0,0,0.45);border-bottom:1px solid var(--gold-lo);
+}
+.logo { font-size:18px;font-weight:900;letter-spacing:1px; }
+.logo-m { color:var(--gold-hi);text-shadow:0 0 14px rgba(240,208,96,0.6); }
+.logo-s { color:#ff7070;text-shadow:0 0 14px rgba(255,112,112,0.5); }
+.status-wrap { display:flex;align-items:center;gap:6px; }
+.status-dot { width:9px;height:9px;border-radius:50%;background:var(--dim);transition:background 0.3s; }
+.status-dot.active { background:#69f0ae;box-shadow:0 0 8px #69f0ae;animation:pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+#status-label { font-size:11px;color:var(--dim);font-weight:700; }
+#db-indicator { font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px; }
+#db-indicator.online  { background:rgba(105,240,174,0.2);color:#69f0ae; }
+#db-indicator.offline { background:rgba(255,255,255,0.08);color:var(--dim); }
 
-  /* gate */
-  #gate-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:24px}
-  .gate-icon{font-size:64px;line-height:1}
-  .gate-title{font-size:22px;font-weight:bold;letter-spacing:4px;color:var(--accent);text-shadow:var(--glow);text-align:center}
-  .gate-desc{font-size:13px;color:var(--dim);text-align:center;line-height:1.7;max-width:300px}
-  .btn-primary{background:transparent;border:2px solid var(--accent);color:var(--accent);
-    font-family:inherit;font-size:15px;font-weight:bold;letter-spacing:3px;padding:16px 48px;
-    cursor:pointer;transition:all 0.2s;text-shadow:var(--glow);box-shadow:var(--glow);
-    -webkit-tap-highlight-color:transparent}
-  .btn-primary:active{background:rgba(0,255,136,0.15);transform:scale(0.97)}
-  .perm-item{background:var(--panel);border:1px solid var(--border);padding:14px;border-radius:4px;
-    text-align:center;font-size:11px;letter-spacing:1px;color:var(--dim);transition:all 0.3s;max-width:320px}
-  .perm-item.granted{border-color:var(--accent);color:var(--accent)}
-  .perm-item .perm-icon{font-size:24px;display:block;margin-bottom:4px}
+/* ══ GATE ══ */
+#gate-screen {
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;padding:32px 20px;gap:0;
+}
+.gate-card {
+  width:100%;max-width:310px;
+  border:4px solid var(--gold);border-radius:var(--r-card);
+  background:linear-gradient(155deg,#2c1e5e 0%,#1e3060 100%);
+  padding:28px 22px;text-align:center;
+  box-shadow:0 0 0 2px var(--gold-hi) inset,0 0 0 5px var(--gold-lo) inset,0 16px 48px rgba(0,0,0,0.6);
+  position:relative;overflow:hidden;
+}
+.gate-card::before {
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% -10%,rgba(240,208,96,0.15) 0%,transparent 55%);
+  pointer-events:none;
+}
+.gate-icon { font-size:60px;display:block;margin-bottom:12px;animation:bounce 2s ease-in-out infinite; }
+@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+.gate-name { font-size:20px;font-weight:900;color:var(--gold-hi);margin-bottom:8px; }
+.gate-desc { font-size:13px;color:var(--dim);line-height:1.7;margin-bottom:16px; }
+.perm-card {
+  background:rgba(0,0,0,0.3);border:2px solid rgba(255,255,255,0.15);
+  border-radius:12px;padding:12px;margin-bottom:14px;
+  font-size:13px;font-weight:700;color:var(--dim);transition:all 0.3s;
+}
+.perm-card.granted { border-color:#69f0ae;color:#69f0ae;background:rgba(105,240,174,0.1); }
+.perm-card .perm-icon { font-size:28px;display:block;margin-bottom:4px; }
+.btn-activate {
+  width:100%;padding:16px;
+  background:linear-gradient(135deg,var(--gold-hi),var(--gold));
+  border:none;border-radius:var(--r-btn);
+  color:#2a1800;font-family:inherit;font-size:18px;font-weight:900;
+  cursor:pointer;transition:transform 0.15s;-webkit-tap-highlight-color:transparent;
+  box-shadow:0 6px 20px rgba(200,160,0,0.45);letter-spacing:1px;
+}
+.btn-activate:active { transform:scale(0.96); }
 
-  /* calibrate */
-  #calibrate-screen{flex:1;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:20px}
-  .cal-title{font-size:16px;letter-spacing:3px;color:var(--accent2)}
-  .noise-meter-wrap{width:100%;max-width:320px}
-  .noise-label{font-size:11px;color:var(--dim);margin-bottom:6px;display:flex;justify-content:space-between}
-  .noise-bar-bg{width:100%;height:20px;background:#1a1a22;border:1px solid var(--border);border-radius:2px;overflow:hidden}
-  .noise-bar-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width 0.1s;border-radius:2px}
-  #noise-value{font-size:28px;font-weight:bold;color:var(--accent);letter-spacing:2px}
-  .cal-desc{font-size:12px;color:var(--dim);text-align:center;max-width:280px;line-height:1.6}
-  .cal-progress{width:100%;max-width:320px;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
-  .cal-progress-fill{height:100%;width:0%;background:var(--accent);transition:width 0.1s;border-radius:2px}
+/* ══ CALIBRATE ══ */
+#calibrate-screen {
+  flex:1;display:none;flex-direction:column;
+  align-items:center;justify-content:center;padding:32px 20px;gap:0;
+}
+.cal-card {
+  width:100%;max-width:310px;
+  border:3px solid #4878c0;border-radius:var(--r-card);
+  background:linear-gradient(155deg,#1e3040,#102030);
+  padding:28px 22px;text-align:center;
+  box-shadow:0 0 24px rgba(72,120,192,0.35);
+}
+.cal-icon { font-size:48px;display:block;margin-bottom:12px;animation:spin 2.5s linear infinite; }
+@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+.cal-title { font-size:16px;font-weight:900;color:#88c0ff;margin-bottom:8px; }
+.cal-desc { font-size:13px;color:var(--dim);line-height:1.7;margin-bottom:16px; }
+.noise-wrap { width:100%;margin-bottom:12px; }
+.noise-lbl { font-size:11px;color:var(--dim);margin-bottom:6px;display:flex;justify-content:space-between;font-weight:700; }
+#noise-value { color:#88c0ff; }
+.noise-bar-bg { height:12px;background:rgba(255,255,255,0.1);border-radius:6px;overflow:hidden; }
+.noise-bar-fill { height:100%;width:0%;background:linear-gradient(90deg,#3870c0,#88c0ff);border-radius:6px;transition:width 0.1s; }
+.cal-progress { width:100%;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden; }
+.cal-progress-fill { height:100%;width:0%;background:linear-gradient(90deg,var(--gold),var(--gold-hi));border-radius:3px;transition:width 0.08s; }
 
-  /* main */
-  #main-screen{flex:1;display:none;flex-direction:column;padding:12px;gap:10px}
+/* ══ MAIN ══ */
+#main-screen { flex:1;display:none;flex-direction:column;padding:10px;gap:10px; }
 
-  /* BP panel */
-  .bp-panel{background:var(--panel);border:1px solid var(--border);padding:14px;position:relative;overflow:hidden}
-  .bp-panel::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(0,255,136,0.05) 0%,transparent 70%);pointer-events:none}
-  .bp-label{font-size:11px;letter-spacing:4px;color:var(--dim);margin-bottom:4px}
-  #bp-display{font-size:68px;font-weight:bold;line-height:1;color:var(--accent);
-    text-shadow:0 0 30px rgba(0,255,136,0.6);letter-spacing:2px;font-variant-numeric:tabular-nums}
-  #bp-display.impact{animation:bpImpact 0.5s}
-  @keyframes bpImpact{0%{transform:scale(1.3);color:#fff;text-shadow:0 0 50px #fff}100%{transform:scale(1);color:var(--accent)}}
-  .bp-rank{font-size:13px;letter-spacing:3px;margin-top:4px;color:var(--accent2)}
-  .metrics-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}
-  .metric{background:#0d0d15;border:1px solid var(--border);padding:8px}
-  .metric-label{font-size:9px;color:var(--dim);letter-spacing:1px;margin-bottom:2px}
-  .metric-val{font-size:16px;font-weight:bold;color:var(--text)}
+/* ─── POKÉMON CARD ─── */
+.poke-card {
+  border-radius:var(--r-card);
+  border:4px solid var(--gold);
+  background:linear-gradient(155deg,#203878,#142460);
+  position:relative;overflow:hidden;
+  box-shadow:0 0 0 2px rgba(240,208,96,0.5) inset,0 0 0 5px rgba(100,72,0,0.6) inset,0 14px 36px rgba(0,0,0,0.55);
+  transition:background 0.4s;
+}
+/* inner frame */
+.poke-card::before {
+  content:'';position:absolute;inset:6px;
+  border:1px solid rgba(255,255,255,0.12);border-radius:10px;pointer-events:none;
+}
+/* type backgrounds */
+.poke-card.t-colorless { background:linear-gradient(155deg,#5a5430,#3a381c); }
+.poke-card.t-fire      { background:linear-gradient(155deg,#6c2c10,#480e00); }
+.poke-card.t-water     { background:linear-gradient(155deg,#1c4898,#0e2c70); }
+.poke-card.t-grass     { background:linear-gradient(155deg,#1c5c28,#0e3c14); }
+.poke-card.t-lightning { background:linear-gradient(155deg,#685408,#483800); }
+.poke-card.t-psychic   { background:linear-gradient(155deg,#681448,#440830); }
+.poke-card.t-fighting  { background:linear-gradient(155deg,#4c2408,#2e1400); }
+.poke-card.t-dragon    { background:linear-gradient(155deg,#3c1878,#200c50); }
+/* holo shimmer (SS) */
+.poke-card.holo::after {
+  content:'';position:absolute;inset:0;border-radius:inherit;
+  background:linear-gradient(115deg,
+    transparent 25%,
+    rgba(255,60,60,0.07) 30%,
+    rgba(255,200,60,0.07) 37%,
+    rgba(60,255,120,0.07) 44%,
+    rgba(60,180,255,0.07) 51%,
+    rgba(180,60,255,0.07) 58%,
+    transparent 63%);
+  background-size:300% 300%;
+  animation:holoShimmer 2.5s linear infinite;
+  pointer-events:none;
+}
+@keyframes holoShimmer { 0%{background-position:0% 50%} 100%{background-position:100% 50%} }
 
-  /* surface */
-  .surface-panel{background:var(--panel);border:1px solid var(--border);padding:10px}
-  .surface-head{font-size:10px;color:var(--dim);letter-spacing:2px;margin-bottom:8px}
-  .surface-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
-  .btn-surface{padding:10px 4px;font-family:inherit;font-size:11px;font-weight:bold;letter-spacing:1px;
-    cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--dim);
-    transition:all 0.15s;-webkit-tap-highlight-color:transparent}
-  .btn-surface.active{border-color:var(--accent2);color:var(--accent2);background:rgba(255,102,0,0.08)}
+/* card header */
+.card-header {
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px 8px;gap:8px;
+}
+.card-left { display:flex;align-items:center;flex:1;min-width:0;gap:6px; }
+.card-stage {
+  flex-shrink:0;
+  background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.22);
+  border-radius:6px;padding:2px 7px;
+  font-size:9px;font-weight:700;letter-spacing:1px;color:rgba(255,255,255,0.7);
+}
+.card-name {
+  font-size:15px;font-weight:900;color:#fff;
+  text-shadow:0 1px 5px rgba(0,0,0,0.5);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.card-hp-area { display:flex;align-items:baseline;gap:3px;flex-shrink:0; }
+.hp-label { font-size:10px;font-weight:900;color:var(--hp-red); }
+.hp-value {
+  font-size:30px;font-weight:900;line-height:1;
+  color:var(--hp-red);font-variant-numeric:tabular-nums;
+  text-shadow:0 0 16px rgba(200,48,32,0.5);
+}
+.hp-value.impact { animation:hpImpact 0.55s; }
+@keyframes hpImpact { 0%{transform:scale(1.7);color:#fff;text-shadow:0 0 40px #fff} 100%{transform:scale(1);color:var(--hp-red)} }
+.type-pip {
+  width:20px;height:20px;border-radius:50%;margin-left:5px;flex-shrink:0;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:900;box-shadow:0 2px 6px rgba(0,0,0,0.5);
+}
+.tp-colorless { background:radial-gradient(circle,#d4c868,#908840);color:#2a2000; }
+.tp-fire      { background:radial-gradient(circle,#ff8040,#c04010);color:#fff; }
+.tp-water     { background:radial-gradient(circle,#88c0ff,#3870c0);color:#fff; }
+.tp-grass     { background:radial-gradient(circle,#80d850,#3a8030);color:#fff; }
+.tp-lightning { background:radial-gradient(circle,#f8e040,#b08800);color:#2a1800; }
+.tp-psychic   { background:radial-gradient(circle,#ff80c8,#c03080);color:#fff; }
+.tp-fighting  { background:radial-gradient(circle,#c08040,#804020);color:#fff; }
+.tp-dragon    { background:radial-gradient(circle,#9848ff,#5010c0);color:#fff; }
 
-  /* seismograph */
-  .seis-panel{background:var(--panel);border:1px solid var(--border);padding:10px}
-  .seis-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-  .seis-title{font-size:11px;color:var(--dim);letter-spacing:2px}
-  #noise-realtime{font-size:10px;color:var(--dim)}
-  #seis-canvas{width:100%;height:90px;display:block}
+/* artwork */
+.card-art {
+  margin:0 14px 8px;
+  border:3px solid rgba(255,255,255,0.22);border-radius:8px;
+  background:rgba(0,0,0,0.35);overflow:hidden;position:relative;
+}
+.art-label {
+  position:absolute;top:4px;left:8px;
+  font-size:9px;color:rgba(255,255,255,0.45);letter-spacing:1px;font-weight:700;
+  pointer-events:none;
+}
+#seis-canvas { width:100%;height:88px;display:block; }
 
-  /* sensing row */
-  .sensing-row{display:flex;align-items:center;gap:10px}
-  .sensing-lbl{font-size:11px;color:var(--dim);letter-spacing:2px}
-  .btn-toggle{padding:6px 18px;font-family:inherit;font-size:12px;font-weight:bold;
-    letter-spacing:2px;cursor:pointer;border:1px solid;background:transparent;transition:all 0.15s;
-    -webkit-tap-highlight-color:transparent}
-  .btn-toggle.on {border-color:var(--accent);color:var(--accent);background:rgba(0,255,136,0.08)}
-  .btn-toggle.off{border-color:var(--dim);color:var(--dim)}
+/* species / noise */
+.card-species {
+  display:flex;align-items:center;justify-content:space-between;
+  padding:2px 14px 8px;
+}
+.species-tag {
+  background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.18);
+  border-radius:20px;padding:3px 10px;
+  font-size:10px;font-weight:700;color:rgba(255,255,255,0.75);
+}
+#noise-realtime { font-size:10px;color:rgba(255,255,255,0.35); }
 
-  /* controls */
-  .ctrl-row{display:flex;gap:8px}
-  .btn-measure{flex:1;padding:18px;background:transparent;border:2px solid var(--accent);
-    color:var(--accent);font-family:inherit;font-size:14px;font-weight:bold;letter-spacing:3px;
-    cursor:pointer;text-shadow:var(--glow);box-shadow:var(--glow);transition:all 0.15s;
-    -webkit-tap-highlight-color:transparent}
-  .btn-measure:disabled{opacity:0.3;cursor:default;box-shadow:none;text-shadow:none}
-  .btn-measure.measuring{border-color:var(--danger);color:var(--danger);
-    text-shadow:0 0 12px rgba(255,34,68,0.6);animation:measurePulse 0.4s infinite alternate}
-  @keyframes measurePulse{from{box-shadow:0 0 8px rgba(255,34,68,0.3)}to{box-shadow:0 0 20px rgba(255,34,68,0.8)}}
-  .btn-save{padding:18px 16px;background:transparent;border:2px solid var(--accent2);
-    color:var(--accent2);font-family:inherit;font-size:12px;font-weight:bold;letter-spacing:1px;
-    cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all 0.15s}
-  .btn-save:disabled{opacity:0.3;cursor:default}
+/* attack row */
+.card-attack {
+  margin:0 14px 8px;
+  background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.1);
+  border-radius:10px;padding:10px 12px;
+  display:flex;align-items:center;gap:10px;
+}
+.attack-energy { display:flex;gap:4px;flex-shrink:0; }
+.energy-pip {
+  width:22px;height:22px;border-radius:50%;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,0.5);
+}
+.attack-info { flex:1;min-width:0; }
+.attack-name { font-size:14px;font-weight:900;color:#fff; }
+.attack-desc { font-size:10px;color:rgba(255,255,255,0.5);margin-top:2px; }
+.attack-damage {
+  font-size:28px;font-weight:900;color:#fff;
+  font-variant-numeric:tabular-nums;flex-shrink:0;
+  text-shadow:0 2px 10px rgba(0,0,0,0.5);
+}
 
-  .btn-recal{width:100%;padding:12px;font-family:inherit;font-size:11px;letter-spacing:2px;
-    cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--dim);
-    transition:all 0.15s;-webkit-tap-highlight-color:transparent}
-  .btn-recal:active{border-color:var(--accent);color:var(--accent)}
+/* footer stats */
+.card-footer-stats {
+  margin:0 14px;padding:8px 10px;
+  border-top:1px solid rgba(255,255,255,0.1);
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;
+}
+.cfs-item { text-align:center; }
+.cfs-lbl { font-size:9px;color:rgba(255,255,255,0.4);letter-spacing:0.5px;margin-bottom:2px; }
+.cfs-val { font-size:14px;font-weight:900;color:rgba(255,255,255,0.85); }
 
-  /* bottom nav */
-  .bottom-nav{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-bottom:8px}
-  .nav-link{display:block;padding:14px;text-align:center;font-family:'Courier New',monospace;
-    font-size:12px;letter-spacing:2px;color:var(--dim);border:1px solid var(--border);
-    text-decoration:none;transition:all 0.15s;-webkit-tap-highlight-color:transparent}
-  .nav-link:active{border-color:var(--accent);color:var(--accent)}
+/* bottom info */
+.card-bottom-row {
+  margin:6px 14px 12px;padding-top:6px;
+  border-top:1px solid rgba(255,255,255,0.08);
+  display:flex;align-items:center;justify-content:space-between;gap:6px;
+}
+.wk-box,.rs-box { font-size:9px;color:rgba(255,255,255,0.4);display:flex;align-items:center;gap:3px; }
+.wk-val,.rs-val { font-weight:700;color:rgba(255,255,255,0.6); }
+.retreat-cost { display:flex;gap:3px;align-items:center; }
+.retreat-pip { width:13px;height:13px;border-radius:50%;background:#a0a050;opacity:0.6; }
+.card-num { font-size:9px;color:rgba(255,255,255,0.25);flex-shrink:0; }
 
-  /* modal */
-  #modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:none;
-    align-items:center;justify-content:center;z-index:500;padding:20px}
-  #modal-overlay.active{display:flex}
-  .modal{background:var(--panel);border:1px solid var(--accent);padding:24px;width:100%;
-    max-width:320px;box-shadow:0 0 40px rgba(0,255,136,0.2)}
-  .modal-title{font-size:14px;letter-spacing:3px;color:var(--accent);margin-bottom:14px}
-  .modal input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);
-    font-family:inherit;font-size:15px;padding:10px;outline:none;transition:border-color 0.2s;margin-bottom:10px}
-  .modal input:focus{border-color:var(--accent)}
-  .birth-row{display:flex;gap:8px;margin-bottom:10px}
-  .birth-row input{flex:1;margin-bottom:0}
-  .modal-buttons{display:flex;gap:10px;margin-top:4px}
-  .modal-buttons button{flex:1;padding:12px;font-family:inherit;font-size:13px;font-weight:bold;
-    letter-spacing:2px;cursor:pointer;border:2px solid;background:transparent;transition:all 0.15s}
-  .btn-confirm{border-color:var(--accent);color:var(--accent)}
-  .btn-cancel {border-color:var(--border);color:var(--dim)}
+/* ── controls ── */
+.controls-section { display:flex;flex-direction:column;gap:8px; }
 
-  /* ranks */
-  .rank-E{color:#888}.rank-D{color:#66aaff}.rank-C{color:#44ff88}
-  .rank-B{color:#ffff44}.rank-A{color:#ff8800}.rank-S{color:#ff2244}.rank-SS{color:#ff00ff}
+.surface-panel {
+  background:rgba(0,0,0,0.28);border:1px solid rgba(255,255,255,0.1);
+  border-radius:14px;padding:12px;
+}
+.surface-head { font-size:11px;font-weight:700;color:var(--dim);margin-bottom:8px;letter-spacing:1px; }
+.surface-row { display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px; }
+.btn-surface {
+  padding:10px 4px;font-family:inherit;font-size:11px;font-weight:700;
+  cursor:pointer;border:2px solid rgba(255,255,255,0.1);
+  background:rgba(255,255,255,0.04);color:var(--dim);
+  border-radius:10px;transition:all 0.15s;-webkit-tap-highlight-color:transparent;
+  line-height:1.5;text-align:center;
+}
+.btn-surface.active { border-color:var(--gold);color:var(--gold-hi);background:rgba(200,160,0,0.12); }
+
+.ctrl-row { display:flex;gap:8px;align-items:stretch; }
+.sensing-wrap {
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;padding:8px 10px;
+  background:rgba(0,0,0,0.28);border:1px solid rgba(255,255,255,0.1);border-radius:12px;
+  flex-shrink:0;
+}
+.sensing-lbl { font-size:9px;font-weight:700;color:var(--dim);letter-spacing:0.5px; }
+.btn-toggle {
+  padding:5px 12px;font-family:inherit;font-size:12px;font-weight:900;
+  cursor:pointer;border:2px solid;border-radius:20px;
+  background:transparent;transition:all 0.15s;-webkit-tap-highlight-color:transparent;
+}
+.btn-toggle.on  { border-color:#69f0ae;color:#69f0ae; }
+.btn-toggle.off { border-color:var(--dim);color:var(--dim); }
+
+.btn-measure {
+  flex:1;padding:16px;border:none;border-radius:12px;
+  background:linear-gradient(135deg,#c83020,#e05030);
+  color:#fff;font-family:inherit;font-size:16px;font-weight:900;
+  cursor:pointer;transition:transform 0.15s;-webkit-tap-highlight-color:transparent;
+  box-shadow:0 4px 16px rgba(200,48,32,0.45);letter-spacing:0.5px;
+}
+.btn-measure:disabled { opacity:0.3;cursor:default;box-shadow:none; }
+.btn-measure.measuring {
+  background:linear-gradient(135deg,#282888,#3838c0);
+  box-shadow:0 4px 16px rgba(56,56,192,0.5);
+  animation:measurePulse 0.5s infinite alternate;
+}
+@keyframes measurePulse { from{transform:scale(1)} to{transform:scale(1.03)} }
+
+.btn-save {
+  padding:16px 14px;border:2px solid var(--gold);border-radius:12px;
+  background:linear-gradient(135deg,#6a4800,#a07010);
+  color:var(--gold-hi);font-family:inherit;font-size:13px;font-weight:900;
+  cursor:pointer;transition:transform 0.15s;-webkit-tap-highlight-color:transparent;
+  box-shadow:0 4px 14px rgba(120,90,0,0.4);flex-shrink:0;
+}
+.btn-save:disabled { opacity:0.25;cursor:default;box-shadow:none; }
+
+.btn-recal {
+  width:100%;padding:12px;border-radius:10px;
+  border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);
+  color:var(--dim);font-family:inherit;font-size:12px;font-weight:700;
+  cursor:pointer;transition:all 0.15s;-webkit-tap-highlight-color:transparent;
+}
+.btn-recal:active { border-color:#88c0ff;color:#88c0ff; }
+
+.bottom-nav { display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-bottom:8px; }
+.nav-link {
+  display:block;padding:14px;text-align:center;
+  font-family:inherit;font-size:13px;font-weight:900;
+  color:var(--text);border:2px solid rgba(255,255,255,0.1);
+  background:rgba(0,0,0,0.28);border-radius:12px;
+  text-decoration:none;transition:all 0.15s;-webkit-tap-highlight-color:transparent;
+}
+.nav-link:active { border-color:var(--gold);color:var(--gold-hi); }
+
+/* ── modal ── */
+#modal-overlay {
+  position:fixed;inset:0;background:rgba(0,0,0,0.82);
+  display:none;align-items:center;justify-content:center;z-index:500;padding:20px;
+  backdrop-filter:blur(8px);
+}
+#modal-overlay.active { display:flex; }
+.modal {
+  background:linear-gradient(155deg,#2c1e5e,#1e3060);
+  border:3px solid var(--gold);border-radius:20px;
+  padding:24px;width:100%;max-width:320px;
+  box-shadow:0 0 0 2px rgba(240,208,96,0.25) inset,0 20px 60px rgba(0,0,0,0.6);
+}
+.modal-title { font-size:16px;font-weight:900;color:var(--gold-hi);margin-bottom:14px;text-align:center; }
+.modal input {
+  width:100%;background:rgba(0,0,0,0.3);border:2px solid rgba(255,255,255,0.15);
+  color:var(--text);font-family:inherit;font-size:15px;font-weight:700;
+  padding:11px 14px;outline:none;border-radius:10px;
+  transition:border-color 0.2s;margin-bottom:8px;
+}
+.modal input::placeholder { color:rgba(255,255,255,0.3); }
+.modal input:focus { border-color:var(--gold); }
+.birth-row { display:flex;gap:8px;margin-bottom:8px; }
+.birth-row input { flex:1;margin-bottom:0; }
+.modal-buttons { display:flex;gap:8px;margin-top:4px; }
+.btn-confirm {
+  flex:1;padding:13px;border:none;border-radius:20px;
+  background:linear-gradient(135deg,var(--gold-hi),var(--gold));
+  color:#2a1800;font-family:inherit;font-size:14px;font-weight:900;cursor:pointer;
+}
+.btn-cancel {
+  flex:1;padding:13px;border:2px solid rgba(255,255,255,0.2);border-radius:20px;
+  background:transparent;color:var(--dim);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;
+}
+
+/* rank colors */
+.rank-E  { color:#b0a868; }
+.rank-D  { color:#88c0ff; }
+.rank-C  { color:#80d850; }
+.rank-B  { color:#f8e040; }
+.rank-A  { color:#ff8040; }
+.rank-S  { color:#ff80c8; }
+.rank-SS { color:#c080ff;text-shadow:0 0 14px #c080ff; }
 </style>
 </head>
 <body>
-<div id="crack-overlay"><canvas id="crack-canvas"></canvas></div>
+<div id="star-overlay"><canvas id="star-canvas"></canvas></div>
 <div id="toast"></div>
 
 <div id="modal-overlay">
   <div class="modal">
-    <div class="modal-title">// REGISTER MENKO</div>
-    <input type="text"   id="inp-name"  placeholder="メンコの名前" maxlength="20">
-    <input type="text"   id="inp-owner" placeholder="所有者名（任意）" maxlength="20">
+    <div class="modal-title">✏️ メンコをとうろく</div>
+    <input type="text"   id="inp-name"  placeholder="メンコのなまえ" maxlength="20">
+    <input type="text"   id="inp-owner" placeholder="もちぬし（なくてもOK）" maxlength="20">
     <div class="birth-row">
-      <input type="number" id="inp-year"  placeholder="製造年 (例:1995)" min="1900" max="2030">
-      <input type="number" id="inp-month" placeholder="月 (1-12)" min="1" max="12">
+      <input type="number" id="inp-year"  placeholder="つくられた年" min="1900" max="2030">
+      <input type="number" id="inp-month" placeholder="月" min="1" max="12">
     </div>
     <div class="modal-buttons">
-      <button class="btn-confirm" onclick="confirmSave()">SAVE</button>
-      <button class="btn-cancel"  onclick="closeModal()">CANCEL</button>
+      <button class="btn-confirm" onclick="confirmSave()">💾 ほぞん！</button>
+      <button class="btn-cancel"  onclick="closeModal()">やめる</button>
     </div>
   </div>
 </div>
 
 <div id="app">
   <div id="header">
-    <div class="logo">MENKO <span>SCOUTER</span></div>
-    <div style="display:flex;align-items:center;gap:4px">
+    <div class="logo"><span class="logo-m">メンコ</span><span class="logo-s">スカウター</span></div>
+    <div class="status-wrap">
       <span class="status-dot" id="status-dot"></span>
-      <span id="status-label">OFFLINE</span>
+      <span id="status-label">まだだよ</span>
       <span id="db-indicator" class="offline">DB</span>
     </div>
   </div>
 
   <!-- GATE -->
   <div id="gate-screen">
-    <div class="gate-icon">⚡</div>
-    <div class="gate-title">SENSOR GATE</div>
-    <div class="gate-desc">加速度センサーへのアクセスが必要です。<br>本番環境（HTTPS）で動作させてください。</div>
-    <div class="perm-item" id="perm-motion"><span class="perm-icon">📡</span>MOTION SENSOR</div>
-    <button class="btn-primary" onclick="requestPermissions()">ACTIVATE</button>
-    <div style="font-size:10px;color:var(--dim);text-align:center;max-width:280px;line-height:1.6">
-      ※ iPhoneはSafariで直接URLを開いてください<br>※ iframeやWebViewでは動作しません
+    <div class="gate-card">
+      <span class="gate-icon">⚡</span>
+      <div class="gate-name">メンコスカウター</div>
+      <div class="gate-desc">
+        iPhoneのゆれセンサーで<br>メンコのつよさをはかるよ！
+        <div style="font-size:11px;margin-top:8px;opacity:0.45">※ SafariでURLを直接ひらいてね</div>
+      </div>
+      <div class="perm-card" id="perm-motion">
+        <span class="perm-icon">📡</span>ゆれセンサー
+      </div>
+      <button class="btn-activate" onclick="requestPermissions()">⚡ スタート！</button>
     </div>
   </div>
 
   <!-- CALIBRATE -->
   <div id="calibrate-screen">
-    <div class="cal-title">// CALIBRATING</div>
-    <div class="cal-desc">周囲を静かにして待ってください。<br>環境ノイズを学習中...</div>
-    <div class="noise-meter-wrap">
-      <div class="noise-label"><span>AMBIENT NOISE</span><span id="noise-value">0.000 G</span></div>
-      <div class="noise-bar-bg"><div class="noise-bar-fill" id="noise-bar"></div></div>
+    <div class="cal-card">
+      <span class="cal-icon">⚙️</span>
+      <div class="cal-title">じゅんびちゅう…</div>
+      <div class="cal-desc">しずかにしてね！<br>まわりのゆれをよんでいるよ</div>
+      <div class="noise-wrap">
+        <div class="noise-lbl">
+          <span>まわりのゆれ</span><span id="noise-value">0.000 G</span>
+        </div>
+        <div class="noise-bar-bg"><div class="noise-bar-fill" id="noise-bar"></div></div>
+      </div>
+      <div class="cal-progress"><div class="cal-progress-fill" id="cal-progress"></div></div>
     </div>
-    <div class="cal-progress"><div class="cal-progress-fill" id="cal-progress"></div></div>
   </div>
 
   <!-- MAIN -->
   <div id="main-screen">
-    <div class="bp-panel">
-      <div class="bp-label">// BATTLE POWER</div>
-      <div id="bp-display">----</div>
-      <div class="bp-rank" id="bp-rank">RANK: STANDBY</div>
-      <div class="metrics-row">
-        <div class="metric"><div class="metric-label">SEISMIC</div><div class="metric-val" id="m-seismic">0.00</div></div>
-        <div class="metric"><div class="metric-label">JERK G/s</div><div class="metric-val" id="m-sharp">0.00</div></div>
-        <div class="metric"><div class="metric-label">PEAK G</div><div class="metric-val" id="m-peak">0.00</div></div>
+
+    <!-- ══ POKÉMON CARD ══ -->
+    <div class="poke-card t-water" id="poke-card">
+      <!-- header -->
+      <div class="card-header">
+        <div class="card-left">
+          <span class="card-stage" id="card-stage">Basic</span>
+          <span class="card-name">メンコ</span>
+        </div>
+        <div class="card-hp-area">
+          <span class="hp-label">HP</span>
+          <span class="hp-value" id="bp-display">----</span>
+          <span class="type-pip tp-water" id="type-pip">💧</span>
+        </div>
+      </div>
+
+      <!-- artwork -->
+      <div class="card-art">
+        <span class="art-label">ゆれメーター</span>
+        <canvas id="seis-canvas"></canvas>
+      </div>
+
+      <!-- species / surface -->
+      <div class="card-species">
+        <span class="species-tag" id="surface-tag">🏗 コンクリート</span>
+        <span id="noise-realtime">ノイズ: --</span>
+      </div>
+
+      <!-- attack -->
+      <div class="card-attack">
+        <div class="attack-energy">
+          <span class="energy-pip tp-water" id="ep1">💧</span>
+          <span class="energy-pip tp-water" id="ep2">💧</span>
+        </div>
+        <div class="attack-info">
+          <div class="attack-name">たたきつける</div>
+          <div class="attack-desc rank-D" id="bp-rank">じゅんびOK！</div>
+        </div>
+        <div class="attack-damage" id="attack-damage">--</div>
+      </div>
+
+      <!-- stats -->
+      <div class="card-footer-stats">
+        <div class="cfs-item">
+          <div class="cfs-lbl">ゆれ</div>
+          <div class="cfs-val" id="m-seismic">0.00</div>
+        </div>
+        <div class="cfs-item">
+          <div class="cfs-lbl">するどさ</div>
+          <div class="cfs-val" id="m-sharp">0.00</div>
+        </div>
+        <div class="cfs-item">
+          <div class="cfs-lbl">さいだい G</div>
+          <div class="cfs-val" id="m-peak">0.00</div>
+        </div>
+      </div>
+
+      <!-- bottom row -->
+      <div class="card-bottom-row">
+        <div class="wk-box">よわい: <span class="wk-val" id="wk-val">--</span></div>
+        <div class="rs-box">たいせい: <span class="rs-val" id="rs-val">--</span></div>
+        <div class="retreat-cost">
+          <span style="font-size:9px;color:rgba(255,255,255,0.3)">にげる:</span>
+          <div class="retreat-pip"></div><div class="retreat-pip"></div>
+        </div>
+        <span class="card-num">No.001</span>
       </div>
     </div>
+    <!-- ══ /POKÉMON CARD ══ -->
 
-    <div class="surface-panel">
-      <div class="surface-head">// SURFACE</div>
-      <div class="surface-row">
-        <button class="btn-surface active" data-surface="concrete" onclick="setSurface('concrete')">コンクリート</button>
-        <button class="btn-surface"        data-surface="asphalt"  onclick="setSurface('asphalt')">アスファルト</button>
-        <button class="btn-surface"        data-surface="dirt"     onclick="setSurface('dirt')">土</button>
+    <div class="controls-section">
+      <div class="surface-panel">
+        <div class="surface-head">🗺️ どこでたたく？</div>
+        <div class="surface-row">
+          <button class="btn-surface active" data-surface="concrete" onclick="setSurface('concrete')">🏗<br>コンクリート</button>
+          <button class="btn-surface"        data-surface="asphalt"  onclick="setSurface('asphalt')">🛣<br>アスファルト</button>
+          <button class="btn-surface"        data-surface="dirt"     onclick="setSurface('dirt')">🌱<br>つち</button>
+        </div>
       </div>
-    </div>
 
-    <div class="seis-panel">
-      <div class="seis-header">
-        <span class="seis-title">// SEISMOGRAPH</span>
-        <span id="noise-realtime">NOISE: --</span>
+      <div class="ctrl-row">
+        <div class="sensing-wrap">
+          <span class="sensing-lbl">センサー</span>
+          <button class="btn-toggle on" id="btn-sensing" onclick="toggleSensing()">ON</button>
+        </div>
+        <button class="btn-measure" id="btn-measure" onclick="toggleMeasure()">▶ はかる！</button>
+        <button class="btn-save"    id="btn-save"    onclick="openModal()" disabled>💾<br>ほぞん</button>
       </div>
-      <canvas id="seis-canvas"></canvas>
-    </div>
 
-    <div class="sensing-row">
-      <span class="sensing-lbl">// SENSING</span>
-      <button class="btn-toggle on" id="btn-sensing" onclick="toggleSensing()">ON</button>
-    </div>
+      <button class="btn-recal" onclick="recalibrate()">↺ もう一度じゅんびする</button>
 
-    <div class="ctrl-row">
-      <button class="btn-measure" id="btn-measure" onclick="toggleMeasure()">▶ MEASURE</button>
-      <button class="btn-save"    id="btn-save"    onclick="openModal()" disabled>SAVE</button>
-    </div>
-
-    <button class="btn-recal" onclick="recalibrate()">↺ RE-CALIBRATE</button>
-
-    <div class="bottom-nav">
-      <a href="catalog.html" class="nav-link">📖 名鑑</a>
-      <a href="admin.html"   class="nav-link">⚙ 管理者</a>
+      <div class="bottom-nav">
+        <a href="catalog.html" class="nav-link">📚 なまえいり</a>
+        <a href="admin.html"   class="nav-link">⚙️ かんりしゃ</a>
+      </div>
     </div>
   </div>
 </div>
@@ -292,7 +589,7 @@ async function initSupabase() {
     db = window.supabase.createClient(url, anonKey);
     setDbIndicator(true);
     return true;
-  } catch (e) {
+  } catch(e) {
     console.warn('Supabase init failed:', e.message);
     setDbIndicator(false);
     return false;
@@ -321,7 +618,6 @@ async function loadAdminConfig() {
     if (row.id === 'surface_params') state.surfaceParams = { ...DEFAULT_SURFACE_PARAMS, ...row.value };
     if (row.id === 'bp_params')      state.bpParams      = { ...DEFAULT_BP_PARAMS, ...row.value };
   }
-  // Reapply threshold with loaded params
   applyThreshold();
 }
 
@@ -329,44 +625,61 @@ async function loadAdminConfig() {
 let toastTimer = null;
 function showToast(msg, type = 'info') {
   const el = $('toast');
-  el.textContent = msg;
-  el.className = 'show ' + type;
+  el.textContent = msg; el.className = 'show ' + type;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { el.className = ''; }, 2200);
 }
 
+// ── CARD TYPE DATA ──
+const TYPE_DATA = {
+  colorless: { cls:'t-colorless', pip:'tp-colorless', emoji:'⭐', label:'むしょく', wk:'かくとう', rs:'--' },
+  fire:      { cls:'t-fire',      pip:'tp-fire',      emoji:'🔥', label:'ほのお',   wk:'みず',     rs:'くさ' },
+  water:     { cls:'t-water',     pip:'tp-water',     emoji:'💧', label:'みず',     wk:'でんき',   rs:'ほのお' },
+  grass:     { cls:'t-grass',     pip:'tp-grass',     emoji:'🌿', label:'くさ',     wk:'ほのお',   rs:'みず' },
+  lightning: { cls:'t-lightning', pip:'tp-lightning', emoji:'⚡', label:'でんき',   wk:'かくとう', rs:'はがね' },
+  psychic:   { cls:'t-psychic',   pip:'tp-psychic',   emoji:'🔮', label:'エスパー', wk:'あく',     rs:'かくとう' },
+  fighting:  { cls:'t-fighting',  pip:'tp-fighting',  emoji:'✊', label:'かくとう', wk:'エスパー', rs:'なし' },
+  dragon:    { cls:'t-dragon',    pip:'tp-dragon',    emoji:'🐉', label:'ドラゴン', wk:'ドラゴン', rs:'--' },
+};
+const RANK_TYPE  = { E:'colorless', D:'water', C:'grass', B:'lightning', A:'fire', S:'psychic', SS:'dragon' };
+const SURF_TYPE  = { concrete:'fighting', asphalt:'lightning', dirt:'grass' };
+const RANK_STAGE = { E:'Basic', D:'Basic', C:'Stage 1', B:'Stage 1', A:'Stage 2', S:'EX', SS:'VMAX' };
+
+function updateCardType(typeName) {
+  const card = $('poke-card');
+  const t = TYPE_DATA[typeName];
+  if (!t) return;
+  Object.keys(TYPE_DATA).forEach(k => card.classList.remove('type-' + k, TYPE_DATA[k].cls));
+  card.classList.add(t.cls);
+  card.classList.toggle('holo', typeName === 'dragon');
+  // type pip
+  const pip = $('type-pip');
+  pip.className = 'type-pip ' + t.pip;
+  pip.textContent = t.emoji;
+  // energy pips
+  ['ep1','ep2'].forEach(id => {
+    const ep = $(id);
+    ep.className = 'energy-pip ' + t.pip;
+    ep.textContent = t.emoji;
+  });
+  // weakness / resistance
+  $('wk-val').textContent = t.wk;
+  $('rs-val').textContent = t.rs;
+}
+
 // ── STATE ──
 const state = {
-  phase: 'gate',
-  motionGranted: false,
-  measuring: false,
-  sensing: true,
-
-  calSamples: [],
-  noiseBaseline: 0,
-  motionThreshold: 0.25,
-
+  phase: 'gate', motionGranted: false, measuring: false, sensing: true,
+  calSamples: [], noiseBaseline: 0, motionThreshold: 0.25,
   surface: 'concrete',
   surfaceParams: { ...DEFAULT_SURFACE_PARAMS },
   bpParams: { ...DEFAULT_BP_PARAMS },
-
-  RING_SIZE: 64,
-  motionRing: [],
-  ringHead: 0,
-
-  lastBP: null,
-  lastSeismic: 0,
-  lastJerk: 0,
-  lastPeakG: 0,
-  lastWaveform: [],
-
-  seisData: new Float32Array(200),
-  seisHead: 0,
-  impactCooldown: false,
-  impactFlashTimer: 0,
+  RING_SIZE: 64, motionRing: [], ringHead: 0,
+  lastBP: null, lastSeismic: 0, lastJerk: 0, lastPeakG: 0, lastWaveform: [],
+  seisData: new Float32Array(200), seisHead: 0,
+  impactCooldown: false, impactFlashTimer: 0,
 };
 
-// ── UTILS ──
 function $(id) { return document.getElementById(id); }
 
 function getRank(bp) {
@@ -380,7 +693,10 @@ function getRank(bp) {
 }
 
 function getRankLabel(bp) {
-  return { E:'E - 見習い', D:'D - 一般', C:'C - 強者', B:'B - 猛者', A:'A - 覇者', S:'S - 伝説', SS:'SS - 神域' }[getRank(bp)];
+  return {
+    E:'⭐ みならい', D:'⭐⭐ いちにんまえ', C:'⭐⭐⭐ つわもの',
+    B:'🌟 もののふ', A:'💫 えいゆう', S:'✨ でんせつ', SS:'🌈 しんわ',
+  }[getRank(bp)];
 }
 
 function setStatus(label, active) {
@@ -392,7 +708,6 @@ function escapeHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ── BP FORMULA (uses admin params) ──
 function calcBP(seismicSum, maxJerk, noiseFloor) {
   const sp = state.surfaceParams[state.surface] || state.surfaceParams.concrete;
   const p  = state.bpParams;
@@ -405,7 +720,7 @@ function applyThreshold() {
   state.motionThreshold = Math.max(state.noiseBaseline * sp.thresholdMult, 0.25);
 }
 
-// ── SCREEN TRANSITIONS ──
+// ── SCREEN ──
 function showScreen(name) {
   $('gate-screen').style.display      = name === 'gate'      ? 'flex' : 'none';
   $('calibrate-screen').style.display = name === 'calibrate' ? 'flex' : 'none';
@@ -413,17 +728,17 @@ function showScreen(name) {
   state.phase = name;
 }
 
-// ── PERMISSION FLOW ──
+// ── PERMISSION ──
 async function requestPermissions() {
   if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
     try {
       const res = await DeviceMotionEvent.requestPermission();
-      if (res !== 'granted') { alert('加速度センサーの許可が必要です'); return; }
-    } catch(e) { alert('DeviceMotion error: ' + e.message); return; }
+      if (res !== 'granted') { alert('ゆれセンサーのきょかが必要です'); return; }
+    } catch(e) { alert('エラー: ' + e.message); return; }
   }
   state.motionGranted = true;
   $('perm-motion').classList.add('granted');
-  $('perm-motion').innerHTML = '<span class="perm-icon">📡</span>GRANTED';
+  $('perm-motion').innerHTML = '<span class="perm-icon">✅</span>OK！';
   window.addEventListener('devicemotion', onDeviceMotion, { passive: true });
   startCalibration();
 }
@@ -431,29 +746,24 @@ async function requestPermissions() {
 // ── CALIBRATION ──
 function startCalibration() {
   showScreen('calibrate');
-  setStatus('CALIBRATING', true);
+  setStatus('じゅんびちゅう', true);
   state.calSamples = [];
-
   if (state.measuring) {
     state.measuring = false;
     const mb = $('btn-measure');
-    if (mb) { mb.textContent = '▶ MEASURE'; mb.classList.remove('measuring'); }
+    if (mb) { mb.textContent = '▶ はかる！'; mb.classList.remove('measuring'); }
   }
-
   const CAL_DURATION = 1500;
   const start = performance.now();
   const tick = () => {
     const elapsed  = performance.now() - start;
     const progress = Math.min(elapsed / CAL_DURATION, 1);
     $('cal-progress').style.width = (progress * 100) + '%';
-
     const last = state.motionRing[(state.ringHead - 1 + state.RING_SIZE) % state.RING_SIZE];
     const netG = last ? Math.max(0, last.mag - 9.8) : 0;
     state.calSamples.push(netG);
-
     $('noise-value').textContent = netG.toFixed(3) + ' G';
     $('noise-bar').style.width   = Math.min(netG * 100, 100) + '%';
-
     if (progress < 1) requestAnimationFrame(tick);
     else finishCalibration();
   };
@@ -462,28 +772,29 @@ function startCalibration() {
 
 async function finishCalibration() {
   const samples = state.calSamples.filter(v => v >= 0);
-  state.noiseBaseline = samples.length > 0
-    ? samples.reduce((a,b) => a+b, 0) / samples.length : 0.05;
+  state.noiseBaseline = samples.length > 0 ? samples.reduce((a,b)=>a+b,0)/samples.length : 0.05;
   applyThreshold();
-
-  setStatus('ARMED', true);
+  setStatus('じゅんびOK！', true);
   showScreen('main');
   initSeisCanvas();
   startContinuousMonitor();
-
+  updateCardType(SURF_TYPE[state.surface] || 'fighting');
   await initSupabase();
   await loadAdminConfig();
 }
 
-// ── SURFACE SELECTOR ──
+// ── SURFACE ──
 function setSurface(s) {
   state.surface = s;
   document.querySelectorAll('.btn-surface').forEach(b =>
     b.classList.toggle('active', b.dataset.surface === s));
   applyThreshold();
+  const labels = { concrete:'🏗 コンクリート', asphalt:'🛣 アスファルト', dirt:'🌱 つち' };
+  $('surface-tag').textContent = labels[s] || s;
+  if (state.lastBP === null) updateCardType(SURF_TYPE[s] || 'fighting');
 }
 
-// ── SENSING TOGGLE ──
+// ── SENSING ──
 function toggleSensing() {
   state.sensing = !state.sensing;
   const btn = $('btn-sensing');
@@ -491,32 +802,27 @@ function toggleSensing() {
   btn.className   = 'btn-toggle ' + (state.sensing ? 'on' : 'off');
   if (!state.sensing && state.measuring) toggleMeasure();
   $('btn-measure').disabled = !state.sensing;
-  setStatus(state.sensing ? 'ARMED' : 'SENSING OFF', state.sensing);
+  setStatus(state.sensing ? 'じゅんびOK！' : 'センサーやすみ', state.sensing);
 }
 
 // ── RECALIBRATE ──
-function recalibrate() {
-  startCalibration();
-}
+function recalibrate() { startCalibration(); }
 
 // ── DEVICE MOTION ──
 function onDeviceMotion(e) {
   if (!state.sensing) return;
   const acc = e.accelerationIncludingGravity || e.acceleration;
   if (!acc) return;
-  const x = acc.x || 0, y = acc.y || 0, z = acc.z || 0;
+  const x = acc.x||0, y = acc.y||0, z = acc.z||0;
   const mag = Math.sqrt(x*x + y*y + z*z);
   const now = performance.now();
-
   state.motionRing[state.ringHead % state.RING_SIZE] = { x, y, z, mag, t: now };
   state.ringHead++;
-
   if (state.phase === 'main') {
     const netG = Math.max(0, mag - 9.8 - state.noiseBaseline);
     state.seisData[state.seisHead % 200] = netG;
     state.seisHead++;
-    $('noise-realtime').textContent = 'NOISE: ' + state.noiseBaseline.toFixed(3) + 'G';
-
+    $('noise-realtime').textContent = 'ノイズ: ' + state.noiseBaseline.toFixed(3) + 'G';
     if (state.measuring && !state.impactCooldown && netG > state.motionThreshold) {
       triggerImpactAnalysis(now);
     }
@@ -526,8 +832,7 @@ function onDeviceMotion(e) {
 // ── SEISMOGRAPH ──
 function initSeisCanvas() {
   const c = $('seis-canvas');
-  c.width  = c.offsetWidth || 340;
-  c.height = 90;
+  c.width = c.offsetWidth || 340; c.height = 88;
 }
 
 function drawSeismograph() {
@@ -535,138 +840,153 @@ function drawSeismograph() {
   if (!c) return;
   const ctx = c.getContext('2d');
   const W = c.width, H = c.height;
-  ctx.fillStyle = '#080810';
-  ctx.fillRect(0, 0, W, H);
-  ctx.strokeStyle = '#1a1a2a'; ctx.lineWidth = 1;
-  for (let i = 0; i < 5; i++) {
-    const y = H * i / 4;
-    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
-  }
-  ctx.strokeStyle = '#00ff88'; ctx.lineWidth = 1.5;
-  ctx.shadowColor = '#00ff88'; ctx.shadowBlur = 3;
+  ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1;
+  for (let i=0;i<5;i++){const y=H*i/4;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  ctx.strokeStyle = '#40e0d0'; ctx.lineWidth = 2;
+  ctx.shadowColor = '#40e0d0'; ctx.shadowBlur = 8;
   ctx.beginPath();
-  for (let i = 0; i < 200; i++) {
-    const idx = (state.seisHead - 200 + i + 2000) % 200;
-    const val = state.seisData[idx] || 0;
-    const x = (i / 200) * W;
-    const y = H - Math.min(val / 3 * H, H - 2) - 1;
-    i === 0 ? ctx.moveTo(x, H/2) : ctx.lineTo(x, y);
+  for (let i=0;i<200;i++){
+    const idx=(state.seisHead-200+i+2000)%200;
+    const val=state.seisData[idx]||0;
+    const x=(i/200)*W, y=H-Math.min(val/3*H,H-2)-1;
+    i===0?ctx.moveTo(x,H/2):ctx.lineTo(x,y);
   }
-  ctx.stroke(); ctx.shadowBlur = 0;
+  ctx.stroke(); ctx.shadowBlur=0;
   if (state.impactFlashTimer > 0) {
     state.impactFlashTimer--;
-    ctx.fillStyle = 'rgba(255,34,68,0.15)'; ctx.fillRect(0,0,W,H);
-    ctx.strokeStyle = '#ff2244'; ctx.lineWidth = 1; ctx.strokeRect(0,0,W,H);
+    ctx.fillStyle='rgba(255,214,0,0.22)'; ctx.fillRect(0,0,W,H);
   }
 }
 
-// ── MONITOR ──
 let _monitorStarted = false;
 function startContinuousMonitor() {
   if (_monitorStarted) return;
   _monitorStarted = true;
-  const loop = () => {
-    if (state.phase === 'main') drawSeismograph();
-    requestAnimationFrame(loop);
-  };
+  const loop = () => { if (state.phase==='main') drawSeismograph(); requestAnimationFrame(loop); };
   requestAnimationFrame(loop);
 }
 
-// ── IMPACT ANALYSIS ──
+// ── IMPACT ──
 function triggerImpactAnalysis(tImpact) {
   state.impactCooldown = true;
   state.impactFlashTimer = 20;
-
   const entries = [];
-  for (let i = 0; i < state.RING_SIZE; i++) {
-    const e = state.motionRing[i];
-    if (e && Math.abs(e.t - tImpact) <= 250) entries.push(e);
+  for (let i=0;i<state.RING_SIZE;i++){
+    const e=state.motionRing[i];
+    if (e&&Math.abs(e.t-tImpact)<=250) entries.push(e);
   }
-  entries.sort((a,b) => a.t - b.t);
-
-  let seismicSum = 0, peakG = 0;
-  entries.forEach(e => {
-    const net = Math.max(0, e.mag - 9.8 - state.noiseBaseline);
-    seismicSum += net;
-    peakG = Math.max(peakG, net);
-  });
-
-  let maxJerk = 0;
-  for (let i = 1; i < entries.length; i++) {
-    const dt = (entries[i].t - entries[i-1].t) / 1000;
-    if (dt > 0) maxJerk = Math.max(maxJerk, Math.abs(entries[i].mag - entries[i-1].mag) / dt);
+  entries.sort((a,b)=>a.t-b.t);
+  let seismicSum=0, peakG=0;
+  entries.forEach(e=>{const net=Math.max(0,e.mag-9.8-state.noiseBaseline);seismicSum+=net;peakG=Math.max(peakG,net);});
+  let maxJerk=0;
+  for (let i=1;i<entries.length;i++){
+    const dt=(entries[i].t-entries[i-1].t)/1000;
+    if(dt>0) maxJerk=Math.max(maxJerk,Math.abs(entries[i].mag-entries[i-1].mag)/dt);
   }
-
-  state.lastWaveform = entries.map(e => Math.max(0, e.mag - 9.8 - state.noiseBaseline));
-  const noiseFloor   = Math.max(state.noiseBaseline, 0.01);
-  const bp           = calcBP(seismicSum, maxJerk, noiseFloor);
-
-  state.lastBP = bp; state.lastSeismic = seismicSum;
-  state.lastJerk = maxJerk; state.lastPeakG = peakG;
-
-  showResult(bp, seismicSum, maxJerk, peakG);
-  setTimeout(() => { state.impactCooldown = false; }, 1500);
+  state.lastWaveform=entries.map(e=>Math.max(0,e.mag-9.8-state.noiseBaseline));
+  const noiseFloor=Math.max(state.noiseBaseline,0.01);
+  const bp=calcBP(seismicSum,maxJerk,noiseFloor);
+  state.lastBP=bp; state.lastSeismic=seismicSum; state.lastJerk=maxJerk; state.lastPeakG=peakG;
+  showResult(bp,seismicSum,maxJerk,peakG);
+  setTimeout(()=>{state.impactCooldown=false;},1500);
 }
 
 // ── SHOW RESULT ──
 function showResult(bp, seismic, jerk, peakG) {
+  const rank = getRank(bp);
+  // update card type and stage
+  updateCardType(RANK_TYPE[rank]);
+  $('card-stage').textContent = RANK_STAGE[rank] || 'Basic';
+  // HP count-up
   const display = $('bp-display');
   display.classList.remove('impact'); void display.offsetWidth; display.classList.add('impact');
   let cur = 0; const inc = bp / 20;
   const tick = () => {
     cur = Math.min(cur + inc, bp);
-    display.textContent = Math.round(cur).toLocaleString();
+    const v = Math.round(cur).toLocaleString();
+    display.textContent = v;
+    $('attack-damage').textContent = v;
     if (cur < bp) requestAnimationFrame(tick);
-    else display.textContent = bp.toLocaleString();
+    else {
+      display.textContent = bp.toLocaleString();
+      $('attack-damage').textContent = bp.toLocaleString();
+    }
   };
   tick();
-  const rank = getRank(bp);
-  $('bp-rank').textContent = 'RANK: ' + getRankLabel(bp);
-  $('bp-rank').className   = 'bp-rank rank-' + rank;
+  // rank label
+  $('bp-rank').textContent = getRankLabel(bp);
+  $('bp-rank').className = 'attack-desc rank-' + rank;
+  // metrics
   $('m-seismic').textContent = seismic.toFixed(3);
   $('m-sharp').textContent   = jerk.toFixed(1);
   $('m-peak').textContent    = peakG.toFixed(3);
   $('btn-save').disabled = false;
-  triggerCrack(bp);
+  triggerStarBurst(bp);
 }
 
-// ── CRACK EFFECT ──
-function triggerCrack(bp) {
-  const canvas = $('crack-canvas');
-  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-  const ctx = canvas.getContext('2d');
-  const cx = window.innerWidth/2, cy = window.innerHeight/2;
+// ── STAR BURST ──
+function triggerStarBurst(bp) {
+  const canvas=$('star-canvas');
+  canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+  const ctx=canvas.getContext('2d');
+  const cx=window.innerWidth/2, cy=window.innerHeight/2;
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  const rank   = getRank(bp);
-  const colors = {E:'#888',D:'#66aaff',C:'#44ff88',B:'#ffff44',A:'#ff8800',S:'#ff2244',SS:'#ff00ff'};
-  const counts = {E:2,D:3,C:4,B:5,A:7,S:9,SS:12};
-  ctx.shadowBlur=8; ctx.shadowColor=colors[rank]; ctx.strokeStyle=colors[rank]; ctx.lineWidth=1.5;
-  for (let i=0; i<(counts[rank]||3); i++) {
-    const angle=(Math.PI*2/counts[rank])*i+(Math.random()-0.5)*0.4;
-    drawCrackLine(ctx,cx,cy,angle,80+Math.random()*120,3);
+  const rank=getRank(bp);
+  const counts={E:6,D:10,C:14,B:18,A:22,S:28,SS:36};
+  const palettes={
+    E:['#b0a868','#d0c888'],
+    D:['#88c0ff','#4878c0','#aad4ff'],
+    C:['#80d850','#40e0d0','#b0ff70'],
+    B:['#f8e040','#ffea00','#ffe880'],
+    A:['#ff8040','#ff9800','#ffb060'],
+    S:['#ff80c8','#ff40a0','#ffa0d8'],
+    SS:['#c080ff','#9040ff','#ff80c8','#f8e040','#60ffda'],
+  };
+  const colors=palettes[rank]||palettes.C;
+  const n=counts[rank]||6;
+  for (let i=0;i<n;i++){
+    const angle=(Math.PI*2/n)*i+(Math.random()-0.5)*0.5;
+    const dist=80+Math.random()*180;
+    const x=cx+Math.cos(angle)*dist, y=cy+Math.sin(angle)*dist;
+    const size=10+Math.random()*24;
+    const color=colors[i%colors.length];
+    ctx.fillStyle=color; ctx.shadowColor=color; ctx.shadowBlur=22;
+    drawStar(ctx,x,y,5,size,size*0.4);
   }
-  $('crack-overlay').classList.add('active');
-  setTimeout(()=>$('crack-overlay').classList.remove('active'),800);
+  for (let i=0;i<n/2;i++){
+    const r=20+Math.random()*60;
+    const angle=Math.random()*Math.PI*2;
+    const x=cx+Math.cos(angle)*r*0.5, y=cy+Math.sin(angle)*r*0.5;
+    const color=colors[i%colors.length];
+    ctx.beginPath(); ctx.arc(x,y,4+Math.random()*8,0,Math.PI*2);
+    ctx.fillStyle=color; ctx.shadowColor=color; ctx.shadowBlur=16; ctx.fill();
+  }
+  ctx.shadowBlur=0;
+  $('star-overlay').classList.add('active');
+  setTimeout(()=>$('star-overlay').classList.remove('active'),1000);
 }
 
-function drawCrackLine(ctx,x,y,angle,len,depth) {
-  if (depth<=0||len<10) return;
-  const ex=x+Math.cos(angle)*len, ey=y+Math.sin(angle)*len;
-  ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(ex,ey); ctx.stroke();
-  if (depth>1&&Math.random()>0.4)
-    drawCrackLine(ctx,ex,ey,angle+(Math.random()-0.5)*1.2,len*0.5,depth-1);
+function drawStar(ctx,cx,cy,spikes,outer,inner){
+  let rot=Math.PI/2*3;
+  ctx.beginPath(); ctx.moveTo(cx,cy-outer);
+  for(let i=0;i<spikes;i++){
+    ctx.lineTo(cx+Math.cos(rot)*outer,cy+Math.sin(rot)*outer); rot+=Math.PI/spikes;
+    ctx.lineTo(cx+Math.cos(rot)*inner,cy+Math.sin(rot)*inner); rot+=Math.PI/spikes;
+  }
+  ctx.closePath(); ctx.fill();
 }
 
-// ── MEASURE TOGGLE ──
+// ── MEASURE ──
 function toggleMeasure() {
   state.measuring = !state.measuring;
   const btn = $('btn-measure');
   if (state.measuring) {
-    btn.textContent='■ STOP'; btn.classList.add('measuring');
-    setStatus('MEASURING',true); state.impactCooldown=false;
+    btn.textContent = '■ ストップ！'; btn.classList.add('measuring');
+    setStatus('はかりちゅう！！', true); state.impactCooldown = false;
   } else {
-    btn.textContent='▶ MEASURE'; btn.classList.remove('measuring');
-    setStatus('ARMED',true);
+    btn.textContent = '▶ はかる！'; btn.classList.remove('measuring');
+    setStatus('じゅんびOK！', true);
   }
 }
 
@@ -682,36 +1002,29 @@ function closeModal() { $('modal-overlay').classList.remove('active'); }
 
 // ── SAVE ──
 async function confirmSave() {
-  const name  = $('inp-name').value.trim()  || '名無しのメンコ';
+  const name  = $('inp-name').value.trim()  || 'なまえなしのメンコ';
   const owner = $('inp-owner').value.trim() || '不明';
   const year  = parseInt($('inp-year').value)  || null;
   const month = parseInt($('inp-month').value) || null;
   closeModal();
-  if (!db) { showToast('DB未接続', 'error'); return; }
-  showToast('保存中...', 'info');
+  if (!db) { showToast('DBにつながってないよ', 'error'); return; }
+  showToast('ほぞんちゅう…', 'info');
   const { error } = await db.from('menko_records').insert({
-    device_id:   getDeviceId(),
-    name, owner,
-    birth_year:  year,
-    birth_month: month,
-    surface:     state.surface,
-    bp:          state.lastBP,
-    seismic:     state.lastSeismic,
-    jerk:        state.lastJerk,
-    peak_g:      state.lastPeakG,
-    waveform:    state.lastWaveform,
+    device_id: getDeviceId(), name, owner,
+    birth_year: year, birth_month: month, surface: state.surface,
+    bp: state.lastBP, seismic: state.lastSeismic, jerk: state.lastJerk,
+    peak_g: state.lastPeakG, waveform: state.lastWaveform,
   });
-  if (error) { showToast('保存失敗', 'error'); console.error(error); return; }
-  showToast('保存完了 ✓', 'success');
+  if (error) { showToast('ほぞんできなかった…', 'error'); console.error(error); return; }
+  showToast('ほぞんできたよ！ 🎉', 'success');
   $('btn-save').disabled = true;
 }
 
-// ── ENTER KEY ──
 ['inp-name','inp-owner','inp-year','inp-month'].forEach(id => {
-  $(id).addEventListener('keydown', e => { if (e.key==='Enter') confirmSave(); });
+  $(id).addEventListener('keydown', e => { if (e.key === 'Enter') confirmSave(); });
 });
 
-window.addEventListener('resize', () => { if (state.phase==='main') initSeisCanvas(); });
+window.addEventListener('resize', () => { if (state.phase === 'main') initSeisCanvas(); });
 showScreen('gate');
 </script>
 </body>
