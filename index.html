@@ -396,6 +396,21 @@ html, body {
   background:transparent;color:var(--dim);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;
 }
 
+/* recheck banner */
+#recheck-banner {
+  background: linear-gradient(135deg,rgba(105,240,174,0.12),rgba(64,196,255,0.08));
+  border: 1px solid rgba(105,240,174,0.3); border-radius: 10px;
+  padding: 10px 14px; display: none; align-items: center; gap: 8px;
+}
+.recheck-icon { font-size: 18px; flex-shrink: 0; }
+#recheck-label { flex: 1; font-size: 12px; font-weight: 700; color: #69f0ae; line-height: 1.4; }
+.recheck-cancel {
+  background: none; border: 1px solid rgba(255,255,255,0.2);
+  color: var(--dim); font-family: inherit; font-size: 11px;
+  padding: 5px 10px; border-radius: 20px; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; flex-shrink: 0;
+}
+
 /* rank colors */
 /* auth button */
 .btn-header-auth {
@@ -569,6 +584,12 @@ html, body {
         <button class="btn-save"    id="btn-save"    onclick="openModal()" disabled>💾<br>ほぞん</button>
       </div>
 
+      <div id="recheck-banner">
+        <span class="recheck-icon">📊</span>
+        <span id="recheck-label">???に追加中</span>
+        <button class="recheck-cancel" onclick="cancelRecheck()">× やめる</button>
+      </div>
+
       <button class="btn-recal" onclick="recalibrate()">↺ もう一度じゅんびする</button>
 
       <div class="bottom-nav">
@@ -583,6 +604,8 @@ html, body {
 // ── SUPABASE ──
 let db = null;
 let currentUser = null;
+let recheckMenkoId   = null;
+let recheckMenkoName = null;
 const DEVICE_ID_KEY = 'menko_device_id';
 
 function getDeviceId() {
@@ -836,6 +859,49 @@ async function finishCalibration() {
   await initSupabase();
   await checkAuth();
   await loadAdminConfig();
+  loadRecheckMode();
+}
+
+// ── RECHECK MODE ──
+function loadRecheckMode() {
+  recheckMenkoId   = localStorage.getItem('menko_recheck_id');
+  recheckMenkoName = localStorage.getItem('menko_recheck_name');
+  if (recheckMenkoId && recheckMenkoName) {
+    const banner = $('recheck-banner');
+    banner.style.display = 'flex';
+    $('recheck-label').textContent = '「' + recheckMenkoName + '」に計測を追加中';
+    $('btn-save').innerHTML = '📊<br>ついか';
+  }
+}
+
+function cancelRecheck() {
+  recheckMenkoId = null; recheckMenkoName = null;
+  localStorage.removeItem('menko_recheck_id');
+  localStorage.removeItem('menko_recheck_name');
+  $('recheck-banner').style.display = 'none';
+  $('btn-save').innerHTML = '💾<br>ほぞん';
+}
+
+async function confirmRecheckSave() {
+  if (!db || !recheckMenkoId || state.lastBP === null) return;
+  showToast('ついかちゅう…', 'info');
+  const { error } = await db.from('menko_measurements').insert({
+    menko_id: parseInt(recheckMenkoId),
+    bp:       state.lastBP,
+    surface:  state.surface,
+    waveform: state.lastWaveform,
+    user_id:  currentUser ? currentUser.id : null,
+  });
+  if (error) {
+    showToast('ついかできなかった…', 'error');
+    console.error(error);
+    return;
+  }
+  showToast('計測をついかしたよ！ 📊', 'success');
+  localStorage.removeItem('menko_recheck_id');
+  localStorage.removeItem('menko_recheck_name');
+  $('btn-save').disabled = true;
+  setTimeout(() => { window.location.href = 'catalog.html'; }, 1200);
 }
 
 // ── SURFACE ──
@@ -1052,6 +1118,7 @@ function toggleMeasure() {
 // ── MODAL ──
 function openModal() {
   if (state.lastBP === null) return;
+  if (recheckMenkoId) { confirmRecheckSave(); return; }
   $('inp-name').value=''; $('inp-owner').value='';
   $('inp-year').value=''; $('inp-month').value='';
   $('modal-overlay').classList.add('active');

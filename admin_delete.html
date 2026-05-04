@@ -132,7 +132,7 @@ async function init() {
     if (!res.ok) throw new Error('config');
     const { url, anonKey, adminPassword: pw } = await res.json();
     adminPassword = pw;
-    db = window.supabase.createClient(url, anonKey);
+    db = window.supabase.createClient(url, anonKey, { auth: { persistSession: false } });
   } catch(e) {
     showToast('設定読み込み失敗', 'error');
   }
