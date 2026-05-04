@@ -756,9 +756,9 @@ function openDetail(id) {
   }
   $('btn-photo-upload').style.display = isOwn ? 'flex' : 'none';
 
-  $('det-seismic').textContent = r.seismic != null ? Number(r.seismic).toFixed(3) : '--';
-  $('det-jerk').textContent    = r.jerk    != null ? Number(r.jerk).toFixed(1)    : '--';
-  $('det-peakg').textContent   = r.peak_g  != null ? Number(r.peak_g).toFixed(3)  : '--';
+  $('det-seismic').textContent = r.seismic != null ? Math.round(Number(r.seismic) * 100) : '--';
+  $('det-jerk').textContent    = r.jerk    != null ? Math.round(Number(r.jerk)) : '--';
+  $('det-peakg').textContent   = r.peak_g  != null ? Math.round(Number(r.peak_g) * 100) : '--';
 
   $('det-owner').textContent  = r.owner || '不明';
   $('det-birth').textContent  = r.birth_year

@@ -1039,9 +1039,9 @@ function showResult(bp, seismic, jerk, peakG) {
   $('bp-rank').textContent = getRankLabel(bp);
   $('bp-rank').className = 'attack-desc rank-' + rank;
   // metrics
-  $('m-seismic').textContent = seismic.toFixed(3);
-  $('m-sharp').textContent   = jerk.toFixed(1);
-  $('m-peak').textContent    = peakG.toFixed(3);
+  $('m-seismic').textContent = Math.round(seismic * 100);
+  $('m-sharp').textContent   = Math.round(jerk);
+  $('m-peak').textContent    = Math.round(peakG * 100);
   $('btn-save').disabled = false;
   // Store last measurement so catalog can pre-fill "add measurement"
   localStorage.setItem('menko_last_bp', bp);
