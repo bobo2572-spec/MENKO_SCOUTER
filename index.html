@@ -572,7 +572,7 @@ html, body {
       <button class="btn-recal" onclick="recalibrate()">↺ もう一度じゅんびする</button>
 
       <div class="bottom-nav">
-        <a href="catalog.html" class="nav-link">📚 なまえいり</a>
+        <a href="catalog.html" class="nav-link">📚 めんこ</a>
         <a href="admin.html"   class="nav-link">⚙️ かんりしゃ</a>
       </div>
     </div>
@@ -977,6 +977,10 @@ function showResult(bp, seismic, jerk, peakG) {
   $('m-sharp').textContent   = jerk.toFixed(1);
   $('m-peak').textContent    = peakG.toFixed(3);
   $('btn-save').disabled = false;
+  // Store last measurement so catalog can pre-fill "add measurement"
+  localStorage.setItem('menko_last_bp', bp);
+  localStorage.setItem('menko_last_surface', state.surface);
+  try { localStorage.setItem('menko_last_waveform', JSON.stringify(state.lastWaveform)); } catch(e) {}
   triggerStarBurst(bp);
 }
 

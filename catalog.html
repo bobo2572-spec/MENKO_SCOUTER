@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#c8a000">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icons/icon.svg">
-<title>メンコスカウター // 名鑑</title>
+<title>メンコスカウター // めんこ</title>
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
@@ -31,18 +31,18 @@ html, body {
   min-height: 100vh;
 }
 
-/* ── toast ── */
+/* toast */
 #toast {
   position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
   padding: 12px 24px; border-radius: 50px; font-size: 14px; font-weight: 700;
-  pointer-events: none; z-index: 1000; opacity: 0; transition: opacity 0.25s; white-space: nowrap;
+  pointer-events: none; z-index: 2000; opacity: 0; transition: opacity 0.25s; white-space: nowrap;
 }
 #toast.show { opacity: 1; }
 #toast.info    { background: rgba(64,196,255,0.92);  color: #001d36; }
 #toast.success { background: rgba(105,240,174,0.92); color: #00251a; }
 #toast.error   { background: rgba(255,82,82,0.92);   color: #fff; }
 
-/* ── header ── */
+/* header */
 #header {
   background: rgba(0,0,0,0.45); border-bottom: 1px solid var(--gold-lo);
   padding: 10px 14px; display: flex; align-items: center; gap: 8px;
@@ -66,11 +66,9 @@ html, body {
 }
 .back-link:active { border-color: var(--gold); color: var(--gold-hi); }
 
-/* ── filter tabs ── */
+/* filter tabs */
 .filter-wrap {
-  padding: 10px 10px 0;
-  overflow-x: auto; -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  padding: 10px 10px 0; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
 }
 .filter-wrap::-webkit-scrollbar { display: none; }
 .filter-row { display: flex; gap: 6px; padding-bottom: 2px; min-width: max-content; }
@@ -81,36 +79,31 @@ html, body {
   transition: all 0.15s; -webkit-tap-highlight-color: transparent;
 }
 .ftab.active { background: rgba(200,160,0,0.2); border-color: var(--gold); color: var(--gold-hi); }
-.ftab-SS { color: #c080ff; }
-.ftab-SS.active { background: rgba(192,128,255,0.2); border-color: #c080ff; color: #c080ff; }
-.ftab-S  { color: #ff80c8; }
-.ftab-S.active  { background: rgba(255,128,200,0.2); border-color: #ff80c8; color: #ff80c8; }
-.ftab-A  { color: #ff8040; }
-.ftab-A.active  { background: rgba(255,128,64,0.2);  border-color: #ff8040; color: #ff8040; }
-.ftab-B  { color: #f8e040; }
-.ftab-B.active  { background: rgba(248,224,64,0.2);  border-color: #f8e040; color: #f8e040; }
-.ftab-C  { color: #80d850; }
-.ftab-C.active  { background: rgba(128,216,80,0.2);  border-color: #80d850; color: #80d850; }
-.ftab-D  { color: #88c0ff; }
-.ftab-D.active  { background: rgba(136,192,255,0.2); border-color: #88c0ff; color: #88c0ff; }
-.ftab-E  { color: #b0a868; }
-.ftab-E.active  { background: rgba(176,168,104,0.2); border-color: #b0a868; color: #b0a868; }
+.ftab-SS { color: #c080ff; } .ftab-SS.active { background: rgba(192,128,255,0.2); border-color: #c080ff; color: #c080ff; }
+.ftab-S  { color: #ff80c8; } .ftab-S.active  { background: rgba(255,128,200,0.2); border-color: #ff80c8; color: #ff80c8; }
+.ftab-A  { color: #ff8040; } .ftab-A.active  { background: rgba(255,128,64,0.2);  border-color: #ff8040; color: #ff8040; }
+.ftab-B  { color: #f8e040; } .ftab-B.active  { background: rgba(248,224,64,0.2);  border-color: #f8e040; color: #f8e040; }
+.ftab-C  { color: #80d850; } .ftab-C.active  { background: rgba(128,216,80,0.2);  border-color: #80d850; color: #80d850; }
+.ftab-D  { color: #88c0ff; } .ftab-D.active  { background: rgba(136,192,255,0.2); border-color: #88c0ff; color: #88c0ff; }
+.ftab-E  { color: #b0a868; } .ftab-E.active  { background: rgba(176,168,104,0.2); border-color: #b0a868; color: #b0a868; }
 
-/* ── catalog list ── */
+/* catalog list */
 .catalog-wrap { padding: 10px; display: flex; flex-direction: column; gap: 8px; }
 #status-msg { font-size: 13px; color: var(--dim); text-align: center; padding: 32px; }
 
-/* ── mini card ── */
+/* mini card */
 .mini-card {
   border: 2px solid var(--gold); border-radius: var(--r-card);
   padding: 10px 12px; position: relative; overflow: hidden;
   box-shadow: 0 0 0 1px rgba(240,208,96,0.2) inset;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s, opacity 0.1s;
 }
+.mini-card:active { transform: scale(0.98); opacity: 0.85; }
 .mini-card::before {
   content: ''; position: absolute; inset: 4px;
   border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; pointer-events: none;
 }
-/* type backgrounds */
 .mini-card.t-colorless { background: rgba(90,84,48,.28);  border-color: #a09050; }
 .mini-card.t-fire      { background: rgba(108,44,16,.28); border-color: #d04828; }
 .mini-card.t-water     { background: rgba(28,72,152,.28); border-color: #4878c0; }
@@ -119,7 +112,6 @@ html, body {
 .mini-card.t-psychic   { background: rgba(104,20,72,.28); border-color: #c03080; }
 .mini-card.t-fighting  { background: rgba(76,36,8,.28);   border-color: #804020; }
 .mini-card.t-dragon    { background: rgba(60,24,120,.28); border-color: #7040d0; }
-/* SS shimmer */
 .mini-card.holo::after {
   content: ''; position: absolute; inset: 0; border-radius: inherit;
   background: linear-gradient(115deg,
@@ -127,15 +119,11 @@ html, body {
     rgba(60,255,120,.06) 44%, rgba(60,180,255,.06) 51%,
     rgba(180,60,255,.06) 58%, transparent 63%);
   background-size: 300% 300%;
-  animation: holoShimmer 2.5s linear infinite;
-  pointer-events: none;
+  animation: holoShimmer 2.5s linear infinite; pointer-events: none;
 }
 @keyframes holoShimmer { 0%{background-position:0% 50%} 100%{background-position:100% 50%} }
-
-/* own card highlight */
 .mini-card.own-card { box-shadow: 0 0 0 1px rgba(240,208,96,0.3) inset, 0 0 12px rgba(200,160,0,0.2); }
 
-/* card rows */
 .mc-top { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
 .mc-pos { min-width: 20px; font-size: 11px; color: var(--dim); text-align: right; flex-shrink: 0; }
 .mc-stage {
@@ -169,6 +157,7 @@ html, body {
   background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.14);
   color: rgba(255,255,255,0.6); white-space: nowrap;
 }
+.mc-photo-icon { font-size: 11px; opacity: 0.7; }
 .btn-edit {
   display: none; margin-left: auto; padding: 4px 12px; flex-shrink: 0;
   border: 1px solid var(--gold); border-radius: 20px;
@@ -187,13 +176,178 @@ html, body {
 .rank-S  { color: #ff80c8; }
 .rank-SS { color: #c080ff; }
 
-/* ── edit modal ── */
-#edit-overlay {
+/* toolbar */
+.toolbar { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px 0; }
+.toolbar-count { font-size: 11px; color: var(--dim); font-weight: 700; }
+.btn-refresh {
+  font-family: inherit; font-size: 11px; font-weight: 700; padding: 6px 14px;
+  border: 1px solid rgba(255,255,255,0.15); border-radius: 20px;
+  background: rgba(255,255,255,0.06); color: var(--dim);
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.btn-refresh:active { border-color: var(--gold); color: var(--gold-hi); }
+
+/* ══ DETAIL OVERLAY ══ */
+#detail-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+  display: none; z-index: 500; overflow-y: auto;
+  -webkit-overflow-scrolling: touch; backdrop-filter: blur(12px);
+}
+#detail-overlay.active { display: block; }
+.det-modal {
+  min-height: 100vh; padding: 10px 12px 48px;
+  display: flex; flex-direction: column; align-items: center;
+}
+.det-topbar {
+  width: 100%; max-width: 340px; display: flex;
+  align-items: center; justify-content: space-between; margin-bottom: 8px;
+}
+.det-close {
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 50%; width: 36px; height: 36px; color: #fff; font-size: 18px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  -webkit-tap-highlight-color: transparent; flex-shrink: 0;
+}
+.det-close:active { background: rgba(255,255,255,0.2); }
+.det-subtitle { font-size: 11px; color: var(--dim); font-weight: 700; letter-spacing: 1px; }
+
+/* det card */
+.det-card {
+  width: 100%; max-width: 340px;
+  border: 4px solid var(--gold); border-radius: 16px;
+  background: linear-gradient(155deg,#203878,#142460);
+  position: relative; overflow: hidden;
+  box-shadow: 0 0 0 2px rgba(240,208,96,0.5) inset, 0 0 0 5px rgba(100,72,0,0.6) inset, 0 14px 36px rgba(0,0,0,0.55);
+}
+.det-card::before {
+  content: ''; position: absolute; inset: 6px;
+  border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; pointer-events: none;
+}
+.det-card.t-colorless { background: linear-gradient(155deg,#5a5430,#3a381c); }
+.det-card.t-fire      { background: linear-gradient(155deg,#6c2c10,#480e00); }
+.det-card.t-water     { background: linear-gradient(155deg,#1c4898,#0e2c70); }
+.det-card.t-grass     { background: linear-gradient(155deg,#1c5c28,#0e3c14); }
+.det-card.t-lightning { background: linear-gradient(155deg,#685408,#483800); }
+.det-card.t-psychic   { background: linear-gradient(155deg,#681448,#440830); }
+.det-card.t-fighting  { background: linear-gradient(155deg,#4c2408,#2e1400); }
+.det-card.t-dragon    { background: linear-gradient(155deg,#3c1878,#200c50); }
+.det-card.holo::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  background: linear-gradient(115deg,
+    transparent 25%, rgba(255,60,60,0.07) 30%, rgba(255,200,60,0.07) 37%,
+    rgba(60,255,120,0.07) 44%, rgba(60,180,255,0.07) 51%,
+    rgba(180,60,255,0.07) 58%, transparent 63%);
+  background-size: 300% 300%;
+  animation: holoShimmer 2.5s linear infinite; pointer-events: none;
+}
+
+/* det header */
+.det-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px 8px; gap: 8px;
+}
+.det-left { display: flex; align-items: center; flex: 1; min-width: 0; gap: 6px; }
+.det-stage {
+  flex-shrink: 0; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.22);
+  border-radius: 6px; padding: 2px 7px;
+  font-size: 9px; font-weight: 700; letter-spacing: 1px; color: rgba(255,255,255,0.7);
+}
+.det-name {
+  font-size: 15px; font-weight: 900; color: #fff;
+  text-shadow: 0 1px 5px rgba(0,0,0,0.5);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.det-hp-area { display: flex; align-items: baseline; gap: 3px; flex-shrink: 0; }
+.det-hp-lbl { font-size: 10px; font-weight: 900; color: var(--hp-red); }
+.det-hp { font-size: 28px; font-weight: 900; line-height: 1; color: var(--hp-red); font-variant-numeric: tabular-nums; }
+
+/* photo */
+.det-photo-wrap {
+  margin: 0 14px 8px;
+  border: 3px solid rgba(255,255,255,0.2); border-radius: 8px;
+  background: rgba(0,0,0,0.35); overflow: hidden;
+  min-height: 100px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 6px; position: relative;
+}
+.det-photo-img { width: 100%; max-height: 220px; object-fit: contain; display: none; }
+.det-photo-placeholder { font-size: 36px; opacity: 0.25; }
+.det-photo-placeholder-lbl { font-size: 10px; color: rgba(255,255,255,0.25); }
+.btn-photo-upload {
+  display: none; align-items: center; gap: 4px; padding: 6px 14px;
+  border-radius: 20px; border: 1px solid var(--gold);
+  background: rgba(200,160,0,0.15); color: var(--gold-hi);
+  font-family: inherit; font-size: 11px; font-weight: 700;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.btn-photo-upload input[type=file] { display: none; }
+.det-uploading { font-size: 11px; color: var(--dim); position: absolute; bottom: 6px; right: 8px; }
+
+/* waveform */
+.det-wave-wrap {
+  margin: 0 14px 8px; border: 2px solid rgba(255,255,255,0.1);
+  border-radius: 8px; background: rgba(0,0,0,0.35); overflow: hidden; position: relative;
+}
+.det-wave-lbl {
+  position: absolute; top: 4px; left: 8px;
+  font-size: 9px; color: rgba(255,255,255,0.4); letter-spacing: 1px; font-weight: 700;
+}
+#det-wave-svg { width: 100%; height: 64px; display: block; }
+
+/* stats */
+.det-stats {
+  margin: 0 14px 0; padding: 8px 0;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px;
+}
+.det-stat { text-align: center; }
+.det-stat-lbl { font-size: 9px; color: rgba(255,255,255,0.4); margin-bottom: 2px; }
+.det-stat-val { font-size: 14px; font-weight: 900; color: rgba(255,255,255,0.85); }
+
+/* info rows */
+.det-info { margin: 0 14px 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; }
+.det-info-row {
+  display: flex; align-items: center; gap: 8px; padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.det-info-lbl { font-size: 10px; color: rgba(255,255,255,0.4); min-width: 72px; flex-shrink: 0; }
+.det-info-val { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.85); }
+
+/* history */
+.det-history { margin: 0 14px 14px; }
+.det-hist-title {
+  font-size: 10px; color: rgba(255,255,255,0.4); letter-spacing: 2px;
+  border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; margin-bottom: 8px;
+}
+.hist-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.hist-badge {
+  flex-shrink: 0; padding: 2px 7px; border-radius: 4px;
+  font-size: 9px; font-weight: 700; letter-spacing: 0.5px;
+}
+.hist-initial { background: rgba(200,160,0,0.2); color: var(--gold-hi); border: 1px solid var(--gold-lo); }
+.hist-recheck { background: rgba(64,196,255,0.15); color: #40c4ff; border: 1px solid rgba(64,196,255,0.3); }
+.hist-info { flex: 1; min-width: 0; }
+.hist-bp { font-size: 15px; font-weight: 900; display: block; }
+.hist-meta { font-size: 10px; color: rgba(255,255,255,0.4); display: block; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hist-photo-link { font-size: 18px; flex-shrink: 0; text-decoration: none; }
+.btn-add-measure {
+  display: none; width: 100%; margin-top: 10px; padding: 13px;
+  border: 2px dashed rgba(105,240,174,0.35); border-radius: 12px;
+  background: rgba(105,240,174,0.05); color: #69f0ae;
+  font-family: inherit; font-size: 13px; font-weight: 900;
+  cursor: pointer; -webkit-tap-highlight-color: transparent; letter-spacing: 0.5px;
+}
+.btn-add-measure:active { background: rgba(105,240,174,0.12); }
+
+/* ══ MODALS (edit + add-measure) ══ */
+#edit-overlay, #addmeasure-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.82);
   display: none; align-items: center; justify-content: center;
-  z-index: 500; padding: 20px; backdrop-filter: blur(8px);
+  z-index: 600; padding: 20px; backdrop-filter: blur(8px);
 }
-#edit-overlay.active { display: flex; }
+#edit-overlay.active, #addmeasure-overlay.active { display: flex; }
 .modal {
   background: linear-gradient(155deg,#2c1e5e,#1e3060);
   border: 3px solid var(--gold); border-radius: 20px;
@@ -201,7 +355,7 @@ html, body {
   box-shadow: 0 0 0 2px rgba(240,208,96,0.25) inset, 0 20px 60px rgba(0,0,0,0.6);
 }
 .modal-title { font-size: 16px; font-weight: 900; color: var(--gold-hi); margin-bottom: 14px; text-align: center; }
-.modal input {
+.modal input[type=text], .modal input[type=number] {
   width: 100%; background: rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.15);
   color: var(--text); font-family: inherit; font-size: 15px; font-weight: 700;
   padding: 11px 14px; outline: none; border-radius: 10px;
@@ -209,6 +363,14 @@ html, body {
 }
 .modal input::placeholder { color: rgba(255,255,255,0.3); }
 .modal input:focus { border-color: var(--gold); }
+.modal textarea {
+  width: 100%; background: rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.15);
+  color: var(--text); font-family: inherit; font-size: 13px;
+  padding: 10px 14px; outline: none; border-radius: 10px;
+  transition: border-color 0.2s; margin-bottom: 8px; resize: none; line-height: 1.5;
+}
+.modal textarea::placeholder { color: rgba(255,255,255,0.3); }
+.modal textarea:focus { border-color: var(--gold); }
 .birth-row { display: flex; gap: 8px; margin-bottom: 8px; }
 .birth-row input { flex: 1; margin-bottom: 0; }
 .modal-buttons { display: flex; gap: 8px; margin-top: 4px; }
@@ -222,22 +384,33 @@ html, body {
   background: transparent; color: var(--dim); font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
 }
 
-/* ── toolbar ── */
-.toolbar { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px 0; }
-.toolbar-count { font-size: 11px; color: var(--dim); font-weight: 700; }
-.btn-refresh {
-  font-family: inherit; font-size: 11px; font-weight: 700; padding: 6px 14px;
-  border: 1px solid rgba(255,255,255,0.15); border-radius: 20px;
-  background: rgba(255,255,255,0.06); color: var(--dim);
-  cursor: pointer; -webkit-tap-highlight-color: transparent;
+/* add-measure specific */
+.am-section-lbl { font-size: 10px; color: var(--dim); font-weight: 700; margin-bottom: 6px; letter-spacing: 1px; }
+.am-surf-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+.am-surf-btn {
+  padding: 8px 4px; border: 2px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04); color: var(--dim);
+  font-family: inherit; font-size: 10px; font-weight: 700;
+  border-radius: 8px; cursor: pointer; text-align: center; line-height: 1.5;
+  -webkit-tap-highlight-color: transparent;
 }
-.btn-refresh:active { border-color: var(--gold); color: var(--gold-hi); }
+.am-surf-btn.active { border-color: var(--gold); color: var(--gold-hi); background: rgba(200,160,0,0.12); }
+.btn-photo-sm {
+  display: flex; align-items: center; gap: 8px; padding: 10px 14px; margin-bottom: 8px;
+  border: 1px dashed rgba(255,255,255,0.2); border-radius: 10px;
+  background: rgba(255,255,255,0.04); color: var(--dim);
+  font-family: inherit; font-size: 12px; font-weight: 700;
+  cursor: pointer; -webkit-tap-highlight-color: transparent; width: 100%;
+}
+.btn-photo-sm input[type=file] { display: none; }
+.btn-photo-sm.has-photo { border-color: var(--gold); color: var(--gold-hi); background: rgba(200,160,0,0.08); }
+.am-prefill-hint { font-size: 10px; color: #69f0ae; margin-bottom: 6px; text-align: center; }
 </style>
 </head>
 <body>
 <div id="toast"></div>
 
-<!-- Edit modal -->
+<!-- ── Edit modal ── -->
 <div id="edit-overlay">
   <div class="modal">
     <div class="modal-title">✏️ メンコをへんしゅう</div>
@@ -254,8 +427,102 @@ html, body {
   </div>
 </div>
 
+<!-- ── Add Measurement modal ── -->
+<div id="addmeasure-overlay">
+  <div class="modal">
+    <div class="modal-title">📊 計測をつける</div>
+    <div id="am-prefill-hint" class="am-prefill-hint" style="display:none">⚡ さいきんの計測がはいったよ！</div>
+    <div class="am-section-lbl">どこでたたいた？</div>
+    <div class="am-surf-row">
+      <button class="am-surf-btn active" data-surface="concrete" onclick="setAmSurface('concrete')">🏗<br>コンクリート</button>
+      <button class="am-surf-btn"        data-surface="asphalt"  onclick="setAmSurface('asphalt')">🛣<br>アスファルト</button>
+      <button class="am-surf-btn"        data-surface="dirt"     onclick="setAmSurface('dirt')">🌱<br>つち</button>
+    </div>
+    <div class="am-section-lbl">けっか（BP）</div>
+    <input type="number" id="am-bp" placeholder="バトルポイント" min="1" max="99999">
+    <textarea id="am-notes" placeholder="メモ（なくてもOK）" rows="2"></textarea>
+    <label class="btn-photo-sm" id="btn-am-photo">
+      📷 しゃしんをつける
+      <input type="file" id="am-file-photo" accept="image/*" onchange="handleMeasurePhotoSelect(event)">
+      <span id="am-photo-name"></span>
+    </label>
+    <div class="modal-buttons">
+      <button class="btn-confirm" onclick="confirmAddMeasure()">💾 ほぞん！</button>
+      <button class="btn-cancel"  onclick="closeAddMeasure()">やめる</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Detail overlay ── -->
+<div id="detail-overlay">
+  <div class="det-modal">
+    <div class="det-topbar">
+      <span class="det-subtitle">// めんこカード</span>
+      <button class="det-close" onclick="closeDetail()">✕</button>
+    </div>
+
+    <div class="det-card" id="det-card">
+      <!-- header -->
+      <div class="det-header">
+        <div class="det-left">
+          <span class="det-stage" id="det-stage">Basic</span>
+          <span class="det-name"  id="det-name">メンコ</span>
+        </div>
+        <div class="det-hp-area">
+          <span class="det-hp-lbl">HP</span>
+          <span class="det-hp"    id="det-hp">--</span>
+          <span class="type-pip"  id="det-type-pip">⭐</span>
+        </div>
+      </div>
+
+      <!-- photo -->
+      <div class="det-photo-wrap" id="det-photo-wrap">
+        <img id="det-photo-img" class="det-photo-img" src="" alt="">
+        <div id="det-photo-placeholder">
+          <div class="det-photo-placeholder">🃏</div>
+          <div class="det-photo-placeholder-lbl">しゃしんなし</div>
+        </div>
+        <label class="btn-photo-upload" id="btn-photo-upload">
+          📷 写真をついか
+          <input type="file" id="file-photo" accept="image/*" onchange="handlePhotoUpload(event)">
+        </label>
+        <div class="det-uploading" id="det-uploading" style="display:none">アップロードちゅう…</div>
+      </div>
+
+      <!-- waveform -->
+      <div class="det-wave-wrap">
+        <div class="det-wave-lbl">ゆれメーター</div>
+        <svg id="det-wave-svg" viewBox="0 0 280 60" preserveAspectRatio="none"></svg>
+      </div>
+
+      <!-- stats -->
+      <div class="det-stats">
+        <div class="det-stat"><div class="det-stat-lbl">ゆれ</div><div class="det-stat-val" id="det-seismic">--</div></div>
+        <div class="det-stat"><div class="det-stat-lbl">するどさ</div><div class="det-stat-val" id="det-jerk">--</div></div>
+        <div class="det-stat"><div class="det-stat-lbl">さいだいG</div><div class="det-stat-val" id="det-peakg">--</div></div>
+      </div>
+
+      <!-- info -->
+      <div class="det-info">
+        <div class="det-info-row"><span class="det-info-lbl">もちぬし</span><span class="det-info-val" id="det-owner">--</span></div>
+        <div class="det-info-row"><span class="det-info-lbl">つくられた年</span><span class="det-info-val" id="det-birth">--</span></div>
+        <div class="det-info-row"><span class="det-info-lbl">ろせん</span><span class="det-info-val" id="det-surface">--</span></div>
+        <div class="det-info-row"><span class="det-info-lbl">とうろく日</span><span class="det-info-val" id="det-date">--</span></div>
+      </div>
+
+      <!-- history -->
+      <div class="det-history">
+        <div class="det-hist-title">// けいそく履歴</div>
+        <div id="det-history-list"><div style="font-size:12px;color:var(--dim);text-align:center;padding:8px">よみこみちゅう…</div></div>
+        <button id="btn-add-measure" class="btn-add-measure" onclick="openAddMeasure()">＋ 計測をつける</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Main ── -->
 <div id="header">
-  <div class="logo"><span class="logo-m">メンコ</span><span class="logo-s">スカウター</span> 名鑑</div>
+  <div class="logo"><span class="logo-m">メンコ</span><span class="logo-s">スカウター</span> めんこ</div>
   <button class="btn-auth" id="btn-auth" onclick="handleAuth()">ログイン</button>
   <a href="index.html" class="back-link">← HOME</a>
 </div>
@@ -286,13 +553,16 @@ html, body {
 let db = null;
 let currentUser = null;
 let allRecords = [];
+let recordMap = new Map();
 let currentFilter = 'all';
 let editingRecord = null;
+let currentDetailRecord = null;
+let amSurface = 'concrete';
+let amPhotoFile = null;
 let toastTimer = null;
 
 function $(id) { return document.getElementById(id); }
 
-// ── type / rank data ──
 const RANK_TYPE  = { E:'colorless',D:'water',C:'grass',B:'lightning',A:'fire',S:'psychic',SS:'dragon' };
 const RANK_STAGE = { E:'Basic',D:'Basic',C:'Stage 1',B:'Stage 2',A:'Stage 2',S:'EX',SS:'VMAX' };
 const TYPE_DATA  = {
@@ -305,6 +575,7 @@ const TYPE_DATA  = {
   fighting:  { cls:'t-fighting',  pip:'tp-fighting',  emoji:'✊' },
   dragon:    { cls:'t-dragon',    pip:'tp-dragon',    emoji:'🐉' },
 };
+const SURF_LABELS = { concrete:'🏗 コンクリート', asphalt:'🛣 アスファルト', dirt:'🌱 つち' };
 
 function getRank(bp) {
   if (bp < 100)  return 'E';
@@ -315,7 +586,9 @@ function getRank(bp) {
   if (bp < 6000) return 'S';
   return 'SS';
 }
-
+function getRankLabel(rank) {
+  return { E:'みならい', D:'いちにんまえ', C:'つわもの', B:'もののふ', A:'えいゆう', S:'でんせつ', SS:'しんわ' }[rank] || rank;
+}
 function calcAge(year, month) {
   if (!year) return '不明';
   const now = new Date();
@@ -326,11 +599,9 @@ function calcAge(year, month) {
   if (m === 0) return y + '年';
   return y + '年' + m + 'ヶ月';
 }
-
 function escapeHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-
 function showToast(msg, type = 'info') {
   const el = $('toast');
   el.textContent = msg; el.className = 'show ' + type;
@@ -351,55 +622,44 @@ function updateAuthBtn() {
     btn.classList.remove('logged-in');
     btn.title = 'Googleでログイン';
   }
-  // Re-render edit buttons without full reload
   updateEditButtons();
+  if (currentDetailRecord) {
+    const isOwn = currentUser && currentDetailRecord.user_id === currentUser.id;
+    $('btn-photo-upload').style.display = isOwn ? 'flex' : 'none';
+    $('btn-add-measure').style.display  = isOwn ? 'block' : 'none';
+  }
 }
-
 async function handleAuth() {
   if (!db) { showToast('よみこみちゅう…', 'info'); return; }
   if (currentUser) {
-    if (confirm(currentUser.email + '\nログアウトしますか？')) {
-      await db.auth.signOut();
-    }
+    if (confirm(currentUser.email + '\nログアウトしますか？')) await db.auth.signOut();
   } else {
-    await db.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.href }
-    });
+    await db.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
   }
 }
-
 function updateEditButtons() {
   document.querySelectorAll('.btn-edit').forEach(btn => {
     const uid = btn.dataset.userId;
-    if (currentUser && uid && uid === currentUser.id) {
-      btn.classList.add('visible');
-    } else {
-      btn.classList.remove('visible');
-    }
+    btn.classList.toggle('visible', !!(currentUser && uid && uid === currentUser.id));
   });
 }
 
-// ── supabase init ──
+// ── init ──
 async function init() {
   try {
     const res = await fetch('/api/config');
     if (!res.ok) throw new Error('config');
     const { url, anonKey } = await res.json();
     db = window.supabase.createClient(url, anonKey);
-
-    // Check session
     const { data: { session } } = await db.auth.getSession();
     if (session) { currentUser = session.user; updateAuthBtn(); }
-
     db.auth.onAuthStateChange((_, session) => {
       currentUser = session?.user || null;
       updateAuthBtn();
     });
-
     loadCatalog();
   } catch(e) {
-    $('status-msg').textContent = 'よみこみできなかったよ… ' + e.message;
+    $('catalog-wrap').innerHTML = '<div id="status-msg">よみこみできなかったよ… ' + e.message + '</div>';
   }
 }
 
@@ -418,13 +678,11 @@ function setFilter(rank) {
 async function loadCatalog() {
   const wrap = $('catalog-wrap');
   wrap.innerHTML = '<div id="status-msg">よみこみちゅう…</div>';
-
   const { data, error } = await db
     .from('menko_records')
-    .select('id, name, owner, bp, birth_year, birth_month, surface, user_id, created_at')
+    .select('id, name, owner, bp, birth_year, birth_month, surface, user_id, created_at, waveform, photo_url, seismic, jerk, peak_g')
     .order('bp', { ascending: false })
     .limit(200);
-
   if (error) {
     wrap.innerHTML = '<div id="status-msg">よみこみできなかったよ… ' + escapeHtml(error.message) + '</div>';
     return;
@@ -434,6 +692,8 @@ async function loadCatalog() {
     return;
   }
   allRecords = data;
+  recordMap.clear();
+  data.forEach(r => recordMap.set(String(r.id), r));
   renderCatalog();
 }
 
@@ -443,30 +703,26 @@ function renderCatalog() {
   const filtered = currentFilter === 'all'
     ? allRecords
     : allRecords.filter(r => getRank(r.bp) === currentFilter);
-
   if (filtered.length === 0) {
     wrap.innerHTML = '<div id="status-msg">このランクのメンコはまだないよ！</div>';
     $('record-count').textContent = '';
     return;
   }
-
   $('record-count').textContent = filtered.length + 'けん';
-
   wrap.innerHTML = filtered.map((r, idx) => {
-    const rank    = getRank(r.bp);
-    const type    = RANK_TYPE[rank];
-    const td      = TYPE_DATA[type] || TYPE_DATA.colorless;
-    const stage   = RANK_STAGE[rank] || 'Basic';
-    const surfLbl = { concrete:'🏗 コンクリート', asphalt:'🛣 アスファルト', dirt:'🌱 つち' }[r.surface] || r.surface || '不明';
-    const age     = calcAge(r.birth_year, r.birth_month);
-    const isHolo  = rank === 'SS';
-    const isOwn   = currentUser && r.user_id === currentUser.id;
-
-    return `<div class="mini-card ${td.cls}${isHolo ? ' holo' : ''}${isOwn ? ' own-card' : ''}" id="mc-${r.id}">
+    const rank  = getRank(r.bp);
+    const type  = RANK_TYPE[rank];
+    const td    = TYPE_DATA[type] || TYPE_DATA.colorless;
+    const stage = RANK_STAGE[rank] || 'Basic';
+    const age   = calcAge(r.birth_year, r.birth_month);
+    const isHolo = rank === 'SS';
+    const isOwn  = currentUser && r.user_id === currentUser.id;
+    return `<div class="mini-card ${td.cls}${isHolo?' holo':''}${isOwn?' own-card':''}" onclick="openDetail('${r.id}')">
       <div class="mc-top">
-        <span class="mc-pos">${idx + 1}</span>
+        <span class="mc-pos">${idx+1}</span>
         <span class="mc-stage">${stage}</span>
         <span class="mc-name">${escapeHtml(r.name)}</span>
+        ${r.photo_url ? '<span class="mc-photo-icon">📷</span>' : ''}
         <div class="mc-hp-area">
           <span class="mc-hp-lbl">HP</span>
           <span class="mc-hp rank-${rank}">${r.bp.toLocaleString()}</span>
@@ -474,19 +730,260 @@ function renderCatalog() {
         </div>
       </div>
       <div class="mc-bot">
-        <span class="mc-owner">▶ ${escapeHtml(r.owner || '不明')}</span>
+        <span class="mc-owner">▶ ${escapeHtml(r.owner||'不明')}</span>
         <span class="mc-age">機齢: ${age}</span>
-        <span class="mc-surf">${surfLbl}</span>
-        <button class="btn-edit${isOwn ? ' visible' : ''}"
-          data-user-id="${escapeHtml(r.user_id || '')}"
-          onclick="openEdit(${JSON.stringify(r).replace(/"/g,'&quot;')})">✏ へんしゅう</button>
+        <span class="mc-surf">${SURF_LABELS[r.surface]||r.surface||'不明'}</span>
+        <button class="btn-edit${isOwn?' visible':''}"
+          data-user-id="${escapeHtml(r.user_id||'')}"
+          onclick="event.stopPropagation();openEdit('${r.id}')">✏ へんしゅう</button>
       </div>
     </div>`;
   }).join('');
 }
 
+// ── detail ──
+function openDetail(id) {
+  const r = recordMap.get(String(id));
+  if (!r) return;
+  currentDetailRecord = r;
+  const rank  = getRank(r.bp);
+  const type  = RANK_TYPE[rank];
+  const td    = TYPE_DATA[type] || TYPE_DATA.colorless;
+  const stage = RANK_STAGE[rank] || 'Basic';
+  const isOwn = currentUser && r.user_id === currentUser.id;
+
+  // card type
+  const card = $('det-card');
+  Object.values(TYPE_DATA).forEach(t => card.classList.remove(t.cls));
+  card.classList.remove('holo');
+  card.classList.add(td.cls);
+  if (rank === 'SS') card.classList.add('holo');
+
+  $('det-stage').textContent = stage;
+  $('det-name').textContent  = r.name;
+  $('det-hp').textContent    = r.bp.toLocaleString();
+  $('det-hp').className = 'det-hp rank-' + rank;
+
+  const pip = $('det-type-pip');
+  pip.className = 'type-pip ' + td.pip;
+  pip.textContent = td.emoji;
+
+  // photo
+  if (r.photo_url) {
+    $('det-photo-img').src = r.photo_url;
+    $('det-photo-img').style.display = 'block';
+    $('det-photo-placeholder').style.display = 'none';
+  } else {
+    $('det-photo-img').style.display = 'none';
+    $('det-photo-placeholder').style.display = 'flex';
+    $('det-photo-placeholder').style.flexDirection = 'column';
+    $('det-photo-placeholder').style.alignItems = 'center';
+  }
+  $('btn-photo-upload').style.display = isOwn ? 'flex' : 'none';
+
+  // waveform
+  drawWaveformSVG(r.waveform);
+
+  // stats
+  $('det-seismic').textContent = r.seismic != null ? Number(r.seismic).toFixed(3) : '--';
+  $('det-jerk').textContent    = r.jerk    != null ? Number(r.jerk).toFixed(1)    : '--';
+  $('det-peakg').textContent   = r.peak_g  != null ? Number(r.peak_g).toFixed(3)  : '--';
+
+  // info
+  $('det-owner').textContent  = r.owner || '不明';
+  $('det-birth').textContent  = r.birth_year
+    ? r.birth_year + '年' + (r.birth_month ? r.birth_month + '月' : '')
+    : '不明';
+  $('det-surface').textContent = SURF_LABELS[r.surface] || r.surface || '不明';
+  $('det-date').textContent    = new Date(r.created_at).toLocaleDateString('ja-JP');
+
+  // add-measure button
+  $('btn-add-measure').style.display = isOwn ? 'block' : 'none';
+
+  loadMeasurements(r.id);
+  $('detail-overlay').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDetail() {
+  $('detail-overlay').classList.remove('active');
+  document.body.style.overflow = '';
+  currentDetailRecord = null;
+}
+
+function drawWaveformSVG(waveform) {
+  const svg = $('det-wave-svg');
+  if (!waveform || waveform.length < 2) {
+    svg.innerHTML = '<text x="140" y="35" text-anchor="middle" fill="rgba(255,255,255,0.25)" font-size="10" font-family="sans-serif">波形データなし</text>';
+    return;
+  }
+  const W = 280, H = 60;
+  const max = Math.max(...waveform, 0.01);
+  const pts = waveform.map((v, i) => {
+    const x = (i / (waveform.length - 1)) * W;
+    const y = H - 4 - (v / max) * (H - 10);
+    return x.toFixed(1) + ',' + y.toFixed(1);
+  }).join(' ');
+  svg.innerHTML =
+    '<rect width="280" height="60" fill="rgba(0,0,0,0.4)" rx="4"/>' +
+    '<line x1="0" y1="30" x2="280" y2="30" stroke="rgba(255,255,255,0.07)" stroke-width="0.5"/>' +
+    '<polyline points="' + pts + '" fill="none" stroke="#40e0d0" stroke-width="1.5" stroke-linejoin="round"/>';
+}
+
+// ── measurements ──
+async function loadMeasurements(menkoId) {
+  const list = $('det-history-list');
+  list.innerHTML = '<div style="font-size:12px;color:var(--dim);text-align:center;padding:8px">よみこみちゅう…</div>';
+  if (!db) return;
+  const { data } = await db
+    .from('menko_measurements')
+    .select('id, bp, surface, photo_url, notes, measured_at')
+    .eq('menko_id', menkoId)
+    .order('measured_at', { ascending: true });
+
+  const r = currentDetailRecord;
+  if (!r) return;
+  const initRank = getRank(r.bp);
+  const initDate = new Date(r.created_at).toLocaleDateString('ja-JP');
+  const initHTML = `<div class="hist-item">
+    <div class="hist-badge hist-initial">初回</div>
+    <div class="hist-info">
+      <span class="hist-bp rank-${initRank}">${r.bp.toLocaleString()} BP</span>
+      <span class="hist-meta">${initDate} | ${getRankLabel(initRank)}</span>
+    </div>
+    ${r.photo_url ? '<a href="' + escapeHtml(r.photo_url) + '" target="_blank" class="hist-photo-link">📷</a>' : ''}
+  </div>`;
+
+  if (!data || data.length === 0) {
+    list.innerHTML = initHTML;
+    return;
+  }
+  const measHTML = data.map(m => {
+    const mRank = getRank(m.bp);
+    const mDate = new Date(m.measured_at).toLocaleDateString('ja-JP');
+    return `<div class="hist-item">
+      <div class="hist-badge hist-recheck">追加</div>
+      <div class="hist-info">
+        <span class="hist-bp rank-${mRank}">${m.bp.toLocaleString()} BP</span>
+        <span class="hist-meta">${mDate}${m.notes ? ' | ' + escapeHtml(m.notes) : ''} | ${SURF_LABELS[m.surface]||m.surface||''}</span>
+      </div>
+      ${m.photo_url ? '<a href="' + escapeHtml(m.photo_url) + '" target="_blank" class="hist-photo-link">📷</a>' : ''}
+    </div>`;
+  }).join('');
+  list.innerHTML = initHTML + measHTML;
+}
+
+// ── photo upload (cover) ──
+async function handlePhotoUpload(event) {
+  if (!db || !currentDetailRecord || !currentUser) return;
+  const file = event.target.files[0];
+  if (!file) return;
+  $('det-uploading').style.display = 'block';
+  $('btn-photo-upload').style.opacity = '0.5';
+  const path = currentDetailRecord.id + '/cover_' + Date.now() + '.jpg';
+  const { error: upErr } = await db.storage.from('menko-photos').upload(path, file, { upsert: true });
+  if (upErr) {
+    showToast('アップロード失敗: ' + upErr.message, 'error');
+    $('det-uploading').style.display = 'none';
+    $('btn-photo-upload').style.opacity = '1';
+    return;
+  }
+  const { data: { publicUrl } } = db.storage.from('menko-photos').getPublicUrl(path);
+  await db.from('menko_records').update({ photo_url: publicUrl }).eq('id', currentDetailRecord.id);
+  currentDetailRecord.photo_url = publicUrl;
+  const idx = allRecords.findIndex(r => r.id === currentDetailRecord.id);
+  if (idx >= 0) allRecords[idx].photo_url = publicUrl;
+  recordMap.set(String(currentDetailRecord.id), currentDetailRecord);
+  $('det-photo-img').src = publicUrl;
+  $('det-photo-img').style.display = 'block';
+  $('det-photo-placeholder').style.display = 'none';
+  $('det-uploading').style.display = 'none';
+  $('btn-photo-upload').style.opacity = '1';
+  showToast('しゃしんをつけたよ！ 📷', 'success');
+}
+
+// ── add measurement ──
+function openAddMeasure() {
+  if (!currentDetailRecord) return;
+  amSurface = 'concrete';
+  amPhotoFile = null;
+  const lastBP = localStorage.getItem('menko_last_bp');
+  $('am-bp').value = lastBP || '';
+  $('am-notes').value = '';
+  $('am-photo-name').textContent = '';
+  $('btn-am-photo').classList.remove('has-photo');
+  document.querySelectorAll('.am-surf-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.surface === 'concrete'));
+  const hint = $('am-prefill-hint');
+  hint.style.display = lastBP ? 'block' : 'none';
+  const lastSurf = localStorage.getItem('menko_last_surface');
+  if (lastSurf) { amSurface = lastSurf; setAmSurface(lastSurf); }
+  $('addmeasure-overlay').classList.add('active');
+  setTimeout(() => $('am-bp').focus(), 100);
+}
+function closeAddMeasure() {
+  $('addmeasure-overlay').classList.remove('active');
+}
+function setAmSurface(s) {
+  amSurface = s;
+  document.querySelectorAll('.am-surf-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.surface === s));
+}
+function handleMeasurePhotoSelect(event) {
+  amPhotoFile = event.target.files[0] || null;
+  const nameEl = $('am-photo-name');
+  if (amPhotoFile) {
+    nameEl.textContent = ' ' + amPhotoFile.name;
+    $('btn-am-photo').classList.add('has-photo');
+  } else {
+    nameEl.textContent = '';
+    $('btn-am-photo').classList.remove('has-photo');
+  }
+}
+async function confirmAddMeasure() {
+  if (!db || !currentUser || !currentDetailRecord) return;
+  const bp = parseInt($('am-bp').value);
+  if (!bp || bp < 1) { showToast('BPをにゅうりょくしてね', 'error'); return; }
+  const notes = $('am-notes').value.trim();
+
+  let photoUrl = null;
+  if (amPhotoFile) {
+    showToast('しゃしんをアップロードちゅう…', 'info');
+    const path = currentDetailRecord.id + '/measure_' + Date.now() + '.jpg';
+    const { error: upErr } = await db.storage.from('menko-photos').upload(path, amPhotoFile, { upsert: true });
+    if (!upErr) {
+      photoUrl = db.storage.from('menko-photos').getPublicUrl(path).data.publicUrl;
+    }
+  }
+
+  let waveform = null;
+  try {
+    const stored = localStorage.getItem('menko_last_waveform');
+    if (stored) waveform = JSON.parse(stored);
+  } catch(e) {}
+
+  closeAddMeasure();
+  showToast('ほぞんちゅう…', 'info');
+  const { error } = await db.from('menko_measurements').insert({
+    menko_id: currentDetailRecord.id,
+    bp, surface: amSurface, waveform,
+    photo_url: photoUrl,
+    notes: notes || null,
+    user_id: currentUser.id,
+  });
+  if (error) {
+    showToast('ほぞんできなかった…', 'error');
+    console.error(error);
+    return;
+  }
+  showToast('計測をつけたよ！ 📊', 'success');
+  loadMeasurements(currentDetailRecord.id);
+}
+
 // ── edit ──
-function openEdit(record) {
+function openEdit(id) {
+  const record = recordMap.get(String(id));
+  if (!record) return;
   editingRecord = record;
   $('edit-name').value  = record.name  || '';
   $('edit-owner').value = record.owner || '';
@@ -496,7 +993,6 @@ function openEdit(record) {
   setTimeout(() => $('edit-name').focus(), 100);
 }
 function closeEdit() { $('edit-overlay').classList.remove('active'); editingRecord = null; }
-
 async function confirmEdit() {
   if (!editingRecord || !db || !currentUser) return;
   const name  = $('edit-name').value.trim()  || editingRecord.name;
@@ -509,16 +1005,22 @@ async function confirmEdit() {
     .from('menko_records')
     .update({ name, owner, birth_year: year, birth_month: month })
     .eq('id', editingRecord.id);
-  if (error) { showToast('ほぞんできなかった…', 'error'); console.error(error); return; }
+  if (error) { showToast('ほぞんできなかった…', 'error'); return; }
   showToast('へんしゅうできたよ！ 🎉', 'success');
-  // Update local data and re-render
   const idx = allRecords.findIndex(r => r.id === editingRecord.id);
-  if (idx >= 0) Object.assign(allRecords[idx], { name, owner, birth_year: year, birth_month: month });
+  if (idx >= 0) {
+    Object.assign(allRecords[idx], { name, owner, birth_year: year, birth_month: month });
+    recordMap.set(String(editingRecord.id), allRecords[idx]);
+  }
   renderCatalog();
 }
 
-['edit-name','edit-owner','edit-year','edit-month'].forEach(id => {
-  $(id).addEventListener('keydown', e => { if (e.key === 'Enter') confirmEdit(); });
+['edit-name','edit-owner','edit-year','edit-month'].forEach(id =>
+  $(id).addEventListener('keydown', e => { if (e.key === 'Enter') confirmEdit(); }));
+
+// Close detail on overlay background tap
+$('detail-overlay').addEventListener('click', e => {
+  if (e.target === $('detail-overlay')) closeDetail();
 });
 
 init();
