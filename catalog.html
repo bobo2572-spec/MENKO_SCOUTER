@@ -949,8 +949,9 @@ function openEdit(id) {
 function closeEdit() { $('edit-overlay').classList.remove('active'); editingRecord = null; }
 async function confirmEdit() {
   if (!editingRecord || !db || !currentUser) return;
-  const name  = $('edit-name').value.trim()  || editingRecord.name;
-  const owner = $('edit-owner').value.trim() || editingRecord.owner;
+  const record = editingRecord;
+  const name  = $('edit-name').value.trim()  || record.name;
+  const owner = $('edit-owner').value.trim() || record.owner;
   const year  = parseInt($('edit-year').value)  || null;
   const month = parseInt($('edit-month').value) || null;
   closeEdit();
@@ -958,13 +959,13 @@ async function confirmEdit() {
   const { error } = await db
     .from('menko_records')
     .update({ name, owner, birth_year: year, birth_month: month })
-    .eq('id', editingRecord.id);
+    .eq('id', record.id);
   if (error) { showToast('ほぞんできなかった…', 'error'); return; }
   showToast('へんしゅうできたよ！ 🎉', 'success');
-  const idx = allRecords.findIndex(r => r.id === editingRecord.id);
+  const idx = allRecords.findIndex(r => r.id === record.id);
   if (idx >= 0) {
     Object.assign(allRecords[idx], { name, owner, birth_year: year, birth_month: month });
-    recordMap.set(String(editingRecord.id), allRecords[idx]);
+    recordMap.set(String(record.id), allRecords[idx]);
   }
   renderCatalog();
 }
